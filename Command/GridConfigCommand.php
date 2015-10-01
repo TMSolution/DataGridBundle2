@@ -34,6 +34,7 @@ class GridConfigCommand extends ContainerAwareCommand
         $this->setName('datagrid:generate:grid:config')
                 ->setDescription("Generate widget and template\r\n use --associated to create associated Grid Config")
                 ->addArgument('entity', InputArgument::REQUIRED, 'Insert entity class name')
+                ->addArgument('path', InputArgument::REQUIRED, 'Insert path')
                 ->addOption('associated', InputOption::VALUE_NONE, 'Insert associated param');
     }
 
@@ -63,12 +64,16 @@ class GridConfigCommand extends ContainerAwareCommand
         return implode("\\", $entityNameArr);
     }
 
-    protected function createDirectory($classPath, $entityNamespace)
+    protected function createDirectory($classPath, $entityNamespace,$objectName,$path)
     {
 
         //    die($entityNamespace);
+        if($path){
+            $path=$path.DIRECTORY_SEPARATOR;
+        }
+        
         $directory = str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace));
-        $directory = $this->replaceLast("Entity", "GridConfig", $directory);
+        $directory = $this->replaceLast("Entity", $objectName.DIRECTORY_SEPARATOR.$path."Config", $directory);
 
         if (is_dir($directory) == false) {
             if (mkdir($directory) == false) {
@@ -140,7 +145,9 @@ class GridConfigCommand extends ContainerAwareCommand
         $classPath = $this->getClassPath($entityName);
         $entityReflection = new ReflectionClass($entityName);
         $entityNamespace = $entityReflection->getNamespaceName();
-        $this->createDirectory($classPath, $entityNamespace);
+        $objectName = $entityReflection->getShortName();
+        $path = $input->getArgument('path');
+        $this->createDirectory($classPath, $entityNamespace,$objectName,$path);
         $fileName = $this->calculateFileName($entityReflection);
 
         $objectName = $entityReflection->getShortName();
