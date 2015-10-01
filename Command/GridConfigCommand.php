@@ -28,14 +28,33 @@ class GridConfigCommand extends ContainerAwareCommand
 {
 
     protected $manyToManyRelationExists;
-
+    protected $directory;
+    protected $namespace;
+    
     protected function configure()
     {
         $this->setName('datagrid:generate:grid:config')
                 ->setDescription("Generate widget and template\r\n use --associated to create associated Grid Config")
                 ->addArgument('entity', InputArgument::REQUIRED, 'Insert entity class name')
-                ->addArgument('path', InputArgument::REQUIRED, 'Insert path')
-                ->addOption('associated', InputOption::VALUE_NONE, 'Insert associated param');
+                ->addArgument('path', InputArgument::OPTIONAL, 'Insert path')
+                ->addOption('associated', null, InputOption::VALUE_NONE, 'Insert associated param');
+
+        $this->setHelp(<<<EOT
+The <info>%command.name%</info> generuje pliki konfiguracyjne dla gridów.
+
+W parametrze entity podajemy pełną nazwę encji.            
+<info>%command.name% entity </info>
+
+Alternatywnie można podać ścieżkę do folderu:
+
+<info>%command.name% entity path </info>
+
+Dla elementów podrzędnych podajemy parametr --associated
+
+<info>%command.name% entity --associated</info>
+
+EOT
+        );
     }
 
     protected function getEntityName($input)
@@ -56,36 +75,44 @@ class GridConfigCommand extends ContainerAwareCommand
         return $classPath;
     }
 
-    protected function getGridConfigNamespaceName($entityName)
-    {
+    
 
-        $entityNameArr = explode("\\", str_replace("Entity", "GridConfig", $entityName));
-        unset($entityNameArr[count($entityNameArr) - 1]);
-        return implode("\\", $entityNameArr);
-    }
-
-    protected function createDirectory($classPath, $entityNamespace,$objectName,$path)
+    protected function createDirectory($classPath, $entityNamespace, $objectName, $path)
     {
 
         //    die($entityNamespace);
-        if($path){
-            $path=$path.DIRECTORY_SEPARATOR;
+        if ($path) {
+            $path = DIRECTORY_SEPARATOR . $path;
         }
-        
-        $directory = str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace));
-        $directory = $this->replaceLast("Entity", $objectName.DIRECTORY_SEPARATOR.$path."Config", $directory);
 
-        if (is_dir($directory) == false) {
-            if (mkdir($directory) == false) {
+        $this->directory = str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace));
+        $this->directory = $this->replaceLast("Entity", "Config". $path . DIRECTORY_SEPARATOR . $objectName, $this->directory);
+       
+        if (is_dir($this->directory) == false) {
+            if (mkdir($this->directory, 0777, TRUE) == false) {
                 throw new UnexpectedValueException("Creating directory failed");
             }
         }
+    }
+    
+    protected function createNameSpace($entityNamespace, $objectName, $path)
+    {
+
+        //    die($entityNamespace);
+        if ($path) {
+            $path = DIRECTORY_SEPARATOR . $path;
+        }
+
+        $this->namespace = str_replace("\\", DIRECTORY_SEPARATOR, $entityNamespace);
+        $this->namespace = $this->replaceLast("Entity", "Config" .$path. DIRECTORY_SEPARATOR . $objectName, $this->namespace);
+        
+        
     }
 
     protected function calculateFileName($entityReflection)
     {
 
-        $fileName = $this->replaceLast("Entity", "GridConfig", $entityReflection->getFileName());
+        $fileName = $this->replaceLast("Entity", "Config", $entityReflection->getFileName());
         return $fileName;
     }
 
@@ -147,14 +174,16 @@ class GridConfigCommand extends ContainerAwareCommand
         $entityNamespace = $entityReflection->getNamespaceName();
         $objectName = $entityReflection->getShortName();
         $path = $input->getArgument('path');
-        $this->createDirectory($classPath, $entityNamespace,$objectName,$path);
-        $fileName = $this->calculateFileName($entityReflection);
+        $this->createDirectory($classPath, $entityNamespace, $objectName, $path);
+        $this->createNameSpace($entityNamespace, $objectName, $path);
+        
+        $fileName = $this->directory.DIRECTORY_SEPARATOR.'GridConfig.php';
 
         $objectName = $entityReflection->getShortName();
         $templating = $this->getContainer()->get('templating');
-        $gridConfigNamespaceName = $this->getGridConfigNamespaceName($entityName);
 
-        dump($fieldsInfo);
+
+       
         $this->isFileNameBusy($fileName);
 
 
@@ -165,7 +194,7 @@ class GridConfigCommand extends ContainerAwareCommand
             "entityName" => $entityName,
             "objectName" => $objectName,
             "fieldsInfo" => $fieldsInfo,
-            "gridConfigNamespaceName" => $gridConfigNamespaceName,
+            "gridConfigNamespaceName" => $this->namespace,
             "associated" => $associated
         ]);
 
