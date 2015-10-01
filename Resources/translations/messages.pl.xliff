@@ -1,0 +1,270 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="en" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>Page</source>
+                <target>Strona</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>Display</source>
+                <target>Pokazuj</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>of %count%</source>
+                <target>z %count%</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>Items per page</source>
+                <target>elementów na stronie</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>Select visible</source>
+                <target>Zaznacz widoczne</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>Select all</source>
+                <target>Zaznacz wszystkie</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>Deselect visible</source>
+                <target>Cofnij zaznaczenie widocznych</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>Deselect all</source>
+                <target>Cofnij zaznaczenie wszystkich</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>Action</source>
+                <target>Akcja</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>Submit Action</source>
+                <target>Wykonaj Akcję</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>From:</source>
+                <target>Od:</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>To:</source>
+                <target>Do:</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>Search</source>
+                <target>Szukaj</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>Reset</source>
+                <target>Wyczyść</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>eq</source>
+                <target>równa się</target>
+            </trans-unit>
+            <trans-unit id="16">
+                <source>btw</source>
+                <target>pomiędzy</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>like</source>
+                <target>zawiera</target>
+            </trans-unit>
+            <trans-unit id="18">
+                <source>client.name</source>
+                <target>Dane klienta</target>
+            </trans-unit>
+            <trans-unit id="19">
+                <source>creationdate</source>
+                <target>Data powstania</target>
+            </trans-unit>
+            <trans-unit id="20">
+                <source>calculationtype</source>
+                <target>Typ kalkulacji</target>
+            </trans-unit>
+            <trans-unit id="21">
+                <source>companies.name</source>
+                <target>Firma ubezpieczeniowa</target>
+            </trans-unit>
+            <trans-unit id="22">
+                <source>categories.name</source>
+                <target>Kategoria</target>
+            </trans-unit>
+            <trans-unit id="23">
+                <source>status.name</source>
+                <target>Status</target>
+            </trans-unit>
+            <trans-unit id="24">
+                <source>number</source>
+                <target>Numer</target>
+            </trans-unit>
+            <trans-unit id="25">
+                <source>lastLogin</source>
+                <target>Ostatnie logowanie</target>
+            </trans-unit>
+            <trans-unit id="26">
+                <source>firstname</source>
+                <target>Imię</target>
+            </trans-unit>
+            <trans-unit id="27">
+                <source>lastname</source>
+                <target>Nazwisko</target>
+            </trans-unit>
+            <trans-unit id="28">
+                <source>agentcompany.name</source>
+                <target>Firma agenta</target>
+            </trans-unit>
+            <trans-unit id="29">
+                <source>groups.name</source>
+                <target>Nazwa grupy</target>
+            </trans-unit>
+            <trans-unit id="30">
+                <source>avatarFileName</source>
+                <target>Avatar</target>
+            </trans-unit>
+            <trans-unit id="31">
+                <source>Actions</source>
+                <target>Akcje</target>
+            </trans-unit>
+            <trans-unit id="32">
+                <source>phone</source>
+                <target>Telefon</target>
+            </trans-unit>
+            <trans-unit id="33">
+                <source>clientStatus.name</source>
+                <target>Status klienta</target>
+            </trans-unit>
+            <trans-unit id="34">
+                <source>notificationTypes.name</source>
+                <target>Typ notyfikacji</target>
+            </trans-unit>
+            <trans-unit id="35">
+                <source>email</source>
+                <target>Email</target>
+            </trans-unit>
+            <trans-unit id="36">
+                <source>note</source>
+                <target>Notatka</target>
+            </trans-unit>
+            <trans-unit id="37">
+                <source>dateTime</source>
+                <target>Data</target>
+            </trans-unit>
+            <trans-unit id="38">
+                <source>levelName</source>
+                <target>Poziom</target>
+            </trans-unit>
+            <trans-unit id="39">
+                <source>extendedMessage</source>
+                <target>Treść wiadomości</target>
+            </trans-unit>
+            <trans-unit id="40">
+                <source>viewed</source>
+                <target>Obejrzany</target>
+            </trans-unit>
+            <trans-unit id="41">
+                <source>name</source>
+                <target>Nazwa</target>
+            </trans-unit>
+            <trans-unit id="42">
+                <source>description</source>
+                <target>Opis</target>
+            </trans-unit>
+            <trans-unit id="48">
+                <source>usersInGroup</source>
+                <target>Użytkowników w grupie</target>
+            </trans-unit>
+            <trans-unit id="49">
+                <source>No data available in table</source>
+                <target>Brak danych </target>
+            </trans-unit>
+            
+            <!-- Grid columns -->
+            <trans-unit id="50">
+                <source>document.number</source>
+                <target>Nr dokumentu</target>
+            </trans-unit>
+            <trans-unit id="51">
+                <source>documentCategory.name</source>
+                <target>Typ dokumentu</target>
+            </trans-unit>
+            <trans-unit id="52">
+                <source>errorType.name</source>
+                <target>Typ błędu</target>
+            </trans-unit>
+            <trans-unit id="53">
+                <source>errorDescription</source>
+                <target>Opis błędu</target>
+            </trans-unit>
+            <trans-unit id="54">
+                <source>creationDate</source>
+                <target>Data dodania</target>
+            </trans-unit>
+            <trans-unit id="55">
+                <source>fixedDate</source>
+                <target>Data poprawy</target>
+            </trans-unit>
+            <trans-unit id="56">
+                <source>documentCategory.entityName</source>
+                <target>Typ dokumentu</target>
+            </trans-unit>
+            <trans-unit id="57">
+                <source>deadline</source>
+                <target>Data poprawy</target>
+            </trans-unit>
+            <trans-unit id="58">
+                <source>insuranceCompany.name</source>
+                <target>TU</target>
+            </trans-unit>
+            <trans-unit id="59">
+                <source>product.name</source>
+                <target>Produkt</target>
+            </trans-unit>
+            <trans-unit id="60">
+                <source>contractDate</source>
+                <target>Data umowy</target>
+            </trans-unit>
+            <trans-unit id="61">
+                <source>startDate</source>
+                <target>Data rozpoczęcia</target>
+            </trans-unit>
+            <trans-unit id="62">
+                <source>endDate</source>
+                <target>Data zakończenia</target>
+            </trans-unit>
+            
+            <trans-unit id="63">
+                <source>logotypeFileName</source>
+                <target>Logotyp</target>
+            </trans-unit>
+            <trans-unit id="64">
+                <source>shortName</source>
+                <target>Nazwa skrócona</target>
+            </trans-unit>
+            <trans-unit id="65">
+                <source>city</source>
+                <target>Miejscowość</target>
+            </trans-unit>
+            <trans-unit id="66">
+                <source>insuranceCompanyType.name</source>
+                <target>Rodzaj lokalizacji</target>
+            </trans-unit>
+            <trans-unit id="67">
+                <source>No result</source>
+                <target>Brak wyników</target>
+            </trans-unit>
+            <trans-unit id="68">
+                <source>No data</source>
+                <target>Brak danych</target>
+            </trans-unit>
+            <trans-unit id="69">
+                <source>Selected _s_ rows</source>
+                <target>Zaznaczono _s_ rekordów</target>
+            </trans-unit>
+           
+        </body>
+    </file>
+</xliff>
+
+
+

@@ -1,0 +1,139 @@
+<?php 
+/**
+ * Copyright (c) 2014, TMSolution
+ * All rights reserved.
+ *
+ * For the full copyright and license information, please view
+ * the file LICENSE.md that was distributed with this source code.
+ */
+namespace  {{gridConfigNamespaceName}};
+
+use APY\DataGridBundle\Grid\Export\ExcelExport;
+use APY\DataGridBundle\Grid\Export\CSVExport;
+use APY\DataGridBundle\Grid\Export\XMLExport;
+use TMSolution\DataGridBundle\Grid\Column\NumberColumn;
+use TMSolution\DataGridBundle\Grid\Column\TextColumn;
+use TMSolution\DataGridBundle\Grid\Action\RowAction;
+use TMSolution\DataGridBundle\GridBuilder\GridBuilder;
+
+/**
+ * GridConifg  for '{{entityName}}'.
+ *
+ * Generated with {@see TMSolution\GridBundle\Command\GridConfigCommand}.
+ */
+class {{objectName}} extends GridBuilder
+{
+
+    public function buildGrid($grid,$routePrefix)
+    {
+        
+        $this->manipulateQuery($grid);
+        $this->configureColumn($grid);
+        $this->configureFilter($grid);
+        $this->configureExport($grid);
+        $this->configureRowButton($grid,$routePrefix);
+        
+        return $grid;
+    }
+    
+   protected function manipulateQuery($grid)
+    {
+      $tableAlias = $grid->getSource()->getTableAlias();
+      $queryBuilderFn = function ($queryBuilder) use($tableAlias) {
+      
+      //Create virtual or aggregate column (contact(a,b), max(a) etc.) always with alias.
+      //Example:
+      //concat(' . $tableAlias . '.name,' . $tableAlias . '.id) as alias
+      //in function addColumn set parameters: 'isManualField'=>true,'field' => 'alias'
+      
+       $queryBuilder->resetDQLPart('select');
+       $queryBuilder->resetDQLPart('join');
+       $queryBuilder->select({% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' )  %}'_{{field}}.{{fieldParam.default_field}} as {{field}}::{{fieldParam.default_field}}{% if not loop.last %},'.{% else %}'{% endif %}{% else %}$tableAlias.'.{{field}}{% if  not loop.last %},'.{% else %}'{% endif %}{% endif %}{% endfor %});
+
+{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' ) %}
+       $queryBuilder->leftJoin("$tableAlias.{{field}}","_{{field}}");
+{%  endif %}{%  endfor %}
+      {% if  many_to_many_relation_exists is defined and many_to_many_relation_exists == true  %} 
+       $queryBuilder->addGroupBy($tableAlias.'.id');
+      {% endif %} 
+       //dump($queryBuilder->getDQL()); //if you want to know how dql looks
+       //dump($queryBuilder->getQuery()->getSQL()); //if you want to know how dql looks  
+      };
+      $grid->getSource()->manipulateQuery($queryBuilderFn);
+    }
+
+    protected function configureColumn($grid)
+    {
+     
+     {% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}
+             
+      $column = new {{fieldParam.default_field_type}}Column(array('id' => '{{field}}.{{fieldParam.default_field}}', 'field'=>'{{field}}.{{fieldParam.default_field}}' ,'title' => '{{field}}.{{fieldParam.default_field}}', 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true));
+      $column->setFilterType('select');
+      $column->setSelectExpanded(FALSE);//TRUE - RADIO or CHECKBOXES, FALSE - SELECT
+      //$column->setSelectMulti(FALSE);//FALSE - RADIO or TRUE - CHECKBOXES 
+      $grid->addColumn($column,$columnOrder=null);
+      {% endif %}
+     {% endfor %}
+    
+     {% for field, fieldParam in fieldsInfo %}{% if loop.first %}
+ $grid->setDefaultOrder('{{field}}', 'asc');
+{% endif %}{% endfor %}
+      $grid->setVisibleColumns([{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}{% if loop.last %}'{{field}}.{{fieldParam.default_field}}'{% else %}'{{field}}.{{fieldParam.default_field}}',{% endif %}{% else %}{% if loop.last %}'{{field}}'{% else %}'{{field}}',{% endif %}{% endif %}{% endfor %}]);
+      $grid->setColumnsOrder([{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}{% if loop.last %}'{{field}}.{{fieldParam.default_field}}'{% else %}'{{field}}.{{fieldParam.default_field}}',{% endif %}{% else %}{% if loop.last %}'{{field}}'{% else %}'{{field}}',{% endif %}{% endif %}{% endfor %}]);
+
+    {% for field, fieldParam in fieldsInfo %}
+/** field {{field}} configuration */    
+    
+    /*
+      //$column->setSafe(false); // not convert html entities
+    {% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}$column = $grid->getColumn('{{field}}.{{fieldParam.default_field}}'); 
+      $column->setTitle('{{objectName}}.{{field}}.{{fieldParam.default_field}}');{% else %}  $column = $grid->getColumn('{{field}}'); 
+      $column->setTitle('{{objectName}}.{{field}}');{% endif %}    
+      $column->manipulateRenderCell(function($value, $row) {
+       //return strip_tags($value); //use this function when setSafe is false
+       return $value;
+      });
+   
+    */
+    {% endfor %}  
+    }
+
+    protected function configureFilter($grid)
+    {
+    
+          /* hide filters */
+          //$grid->hideFilters();
+          
+          /* filter columns [blocks]*/      
+          $grid->setNumberPresentedFilterColumn(3);
+          $grid->setShowFilters([{% for field, fieldParam in fieldsInfo %}{% if loop.last %}'{{field}}'{% else %}'{{field}}',{% endif %}{% endfor %}]);
+          
+    }
+
+    protected function configureExport($grid)
+    {
+           
+          $grid->addExport(new ExcelExport('Excel'));
+          $grid->addExport(new CSVExport('CSV'));
+          $grid->addExport(new XMLExport('XML'));
+          
+    }
+
+    protected function configureRowButton($grid,$routePrefix)
+    {
+
+        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_read', false, null, ['id' => 'button-id', 'class' => 'button-class', 'data-original-title' => 'Show']);
+        $rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);
+        $grid->addRowAction($rowAction);
+    
+        $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix.'_update', false, null, ['id' => 'button-id', 'class' => 'button-class', 'data-original-title' => 'Edit']);
+        $rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);
+        $grid->addRowAction($rowAction);
+        
+        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => 'button-id', 'class' => 'button-class', 'data-original-title' => 'Delete']);
+        $rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);
+        $grid->addRowAction($rowAction);
+    }
+
+}
+

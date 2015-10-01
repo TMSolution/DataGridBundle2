@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="grid.column.text.class">TMSolution\DataGridBundle\Grid\Column\TextColumn</parameter>
+        <parameter key="grid.column.number.class">TMSolution\DataGridBundle\Grid\Column\NumberColumn</parameter>
+        <parameter key="grid.column.boolean.class">TMSolution\DataGridBundle\Grid\Column\BooleanColumn</parameter>
+        <parameter key="grid.column.datetime.class">TMSolution\DataGridBundle\Grid\Column\DateTimeColumn</parameter>
+        <parameter key="grid.column.date.class">TMSolution\DataGridBundle\Grid\Column\DateColumn</parameter>
+        <parameter key="grid.column.time.class">TMSolution\DataGridBundle\Grid\Column\TimeColumn</parameter>
+        <parameter key="grid.column.array.class">TMSolution\DataGridBundle\Grid\Column\ArrayColumn</parameter>
+        <parameter key="grid.column.blank.class">TMSolution\DataGridBundle\Grid\Column\BlankColumn</parameter>
+    </parameters>
+
+    <services>
+        <service id="grid.column.text" class="%grid.column.text.class%" public="false">
+            <tag name="grid.column.extension" />
+        </service>
+
+        <service id="grid.column.number" class="%grid.column.number.class%" public="false">
+            <tag name="grid.column.extension" />
+        </service>
+
+        <service id="grid.column.boolean" class="%grid.column.boolean.class%" public="false">
+            <tag name="grid.column.extension" />
+        </service>
+
+        <service id="grid.column.datetime" class="%grid.column.datetime.class%" public="false">
+            <tag name="grid.column.extension" />
+        </service>
+
+        <service id="grid.column.date" class="%grid.column.date.class%" public="false">
+            <tag name="grid.column.extension" />
+        </service>
+
+        <service id="grid.column.time" class="%grid.column.time.class%" public="false">
+            <tag name="grid.column.extension" />
+        </service>
+
+        <service id="grid.column.array" class="%grid.column.array.class%" public="false">
+            <tag name="grid.column.extension" />
+        </service>
+
+        <service id="grid.column.blank" class="%grid.column.blank.class%" public="false">
+            <tag name="grid.column.extension" />
+        </service>
+
+    </services>
+</container>

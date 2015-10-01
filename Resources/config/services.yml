@@ -1,0 +1,8 @@
+parameters:
+#    tm_solution_data_grid.example.class: TMSolution\DataGridBundle\Example
+   grid.class: TMSolution\DataGridBundle\Grid\Grid
+
+services:
+#    tm_solution_data_grid.example:
+#        class: %tm_solution_data_grid.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]
