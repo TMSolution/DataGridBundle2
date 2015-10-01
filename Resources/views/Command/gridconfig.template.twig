@@ -14,18 +14,20 @@ use APY\DataGridBundle\Grid\Export\XMLExport;
 use TMSolution\DataGridBundle\Grid\Column\NumberColumn;
 use TMSolution\DataGridBundle\Grid\Column\TextColumn;
 use TMSolution\DataGridBundle\Grid\Action\RowAction;
-use TMSolution\DataGridBundle\GridBuilder\GridBuilder;
+{% if associated %}use Core\PrototypeBundle\GridConfig\AssociationGridConfig;
+{% else %}use TMSolution\DataGridBundle\GridBuilder\GridBuilder;{% endif %}
 
 /**
  * GridConifg  for '{{entityName}}'.
  *
  * Generated with {@see TMSolution\GridBundle\Command\GridConfigCommand}.
  */
-class {{objectName}} extends GridBuilder
+class {{objectName}} extends {% if associated %}AssociationGridConfig{% else %}GridBuilder{% endif %}
 {
 
     public function buildGrid($grid,$routePrefix)
     {
+        {% if associated %}$this->request=$this->getContainer()->get('request');{% endif %}
         
         $this->manipulateQuery($grid);
         $this->configureColumn($grid);
@@ -33,13 +35,17 @@ class {{objectName}} extends GridBuilder
         $this->configureExport($grid);
         $this->configureRowButton($grid,$routePrefix);
         
-        return $grid;
+        return $grid; 
     }
     
    protected function manipulateQuery($grid)
     {
+      {% if associated %}  $parentId=$this->request->get("parentId");
+          $tableAlias = $grid->getSource()->getTableAlias();
+          $parentFieldName=$this->getParentFieldNameFromRequest();
+      {% endif %}
       $tableAlias = $grid->getSource()->getTableAlias();
-      $queryBuilderFn = function ($queryBuilder) use($tableAlias) {
+      $queryBuilderFn = function ($queryBuilder) use($tableAlias{% if associated %},$parentFieldName,$parentId{% endif %}) {
       
       //Create virtual or aggregate column (contact(a,b), max(a) etc.) always with alias.
       //Example:
@@ -53,6 +59,10 @@ class {{objectName}} extends GridBuilder
 {% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' ) %}
        $queryBuilder->leftJoin("$tableAlias.{{field}}","_{{field}}");
 {%  endif %}{%  endfor %}
+    
+        {% if associated %}$queryBuilder->Where("_$parentFieldName.id=:$parentFieldName");        
+        $queryBuilder->setParameter("$parentFieldName", (int)$parentId);{%  endif %}
+
       {% if  many_to_many_relation_exists is defined and many_to_many_relation_exists == true  %} 
        $queryBuilder->addGroupBy($tableAlias.'.id');
       {% endif %} 
@@ -62,16 +72,17 @@ class {{objectName}} extends GridBuilder
       $grid->getSource()->manipulateQuery($queryBuilderFn);
     }
 
+    
     protected function configureColumn($grid)
     {
      
      {% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}
              
-      $column = new {{fieldParam.default_field_type}}Column(array('id' => '{{field}}.{{fieldParam.default_field}}', 'field'=>'{{field}}.{{fieldParam.default_field}}' ,'title' => '{{field}}.{{fieldParam.default_field}}', 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true));
-      $column->setFilterType('select');
-      $column->setSelectExpanded(FALSE);//TRUE - RADIO or CHECKBOXES, FALSE - SELECT
-      //$column->setSelectMulti(FALSE);//FALSE - RADIO or TRUE - CHECKBOXES 
-      $grid->addColumn($column,$columnOrder=null);
+      ${{field}} = new {{fieldParam.default_field_type}}Column(array('id' => '{{field}}.{{fieldParam.default_field}}', 'field'=>'{{field}}.{{fieldParam.default_field}}' ,'title' => '{{field}}.{{fieldParam.default_field}}', 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true));
+      ${{field}}->setFilterType('select');
+      ${{field}}->setSelectExpanded(FALSE);//TRUE - RADIO or CHECKBOXES, FALSE - SELECT
+      //${{field}}->setSelectMulti(FALSE);//FALSE - RADIO or TRUE - CHECKBOXES 
+      $grid->addColumn(${{field}},$columnOrder=null);
       {% endif %}
      {% endfor %}
     
@@ -85,11 +96,12 @@ class {{objectName}} extends GridBuilder
 /** field {{field}} configuration */    
     
     /*
-      //$column->setSafe(false); // not convert html entities
-    {% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}$column = $grid->getColumn('{{field}}.{{fieldParam.default_field}}'); 
-      $column->setTitle('{{objectName}}.{{field}}.{{fieldParam.default_field}}');{% else %}  $column = $grid->getColumn('{{field}}'); 
-      $column->setTitle('{{objectName}}.{{field}}');{% endif %}    
-      $column->manipulateRenderCell(function($value, $row) {
+      
+    {% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}${{field}} = $grid->getColumn('{{field}}.{{fieldParam.default_field}}'); 
+      ${{field}}->setTitle('{{objectName}}.{{field}}.{{fieldParam.default_field}}');{% else %}  ${{field}} = $grid->getColumn('{{field}}'); 
+      ${{field}}->setTitle('{{objectName}}.{{field}}');{% endif %}    
+      //${{field}}->setSafe(false); // not convert html entities
+      ${{field}}->manipulateRenderCell(function($value, $row) {
        //return strip_tags($value); //use this function when setSafe is false
        return $value;
       });
@@ -121,17 +133,22 @@ class {{objectName}} extends GridBuilder
 
     protected function configureRowButton($grid,$routePrefix)
     {
+        {% if  %}
+        $parametersArr=$this->request->attributes->all();
+        $parameters=["id"];
+        $parameters=  array_merge($parameters,$parametersArr["_route_params"]);
+        {% endif %}
 
-        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_read', false, null, ['id' => 'button-id', 'class' => 'button-class', 'data-original-title' => 'Show']);
-        $rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);
+        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_read', false, null, ['id' => '{{objectName|lower}}-read-button', 'class' => 'button-class', 'data-original-title' => 'Show']);
+        {% if  %}$rowAction->setRouteParameters($parameters);{% else %}$rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);{% endif %}
         $grid->addRowAction($rowAction);
     
-        $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix.'_update', false, null, ['id' => 'button-id', 'class' => 'button-class', 'data-original-title' => 'Edit']);
-        $rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);
+        $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix.'_update', false, null, ['id' => '{{objectName|lower}}-update-button', 'class' => 'button-class', 'data-original-title' => 'Edit']);
+        {% if  %}$rowAction->setRouteParameters($parameters);{% else %}$rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);{% endif %}
         $grid->addRowAction($rowAction);
         
-        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => 'button-id', 'class' => 'button-class', 'data-original-title' => 'Delete']);
-        $rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);
+        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => '{{objectName|lower}}-delete-button', 'class' => 'button-class', 'data-original-title' => 'Delete']);
+        {% if  %}$rowAction->setRouteParameters($parameters);{% else %}$rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);{% endif %}
         $grid->addRowAction($rowAction);
     }
 
