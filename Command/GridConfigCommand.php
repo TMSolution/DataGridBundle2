@@ -182,7 +182,9 @@ EOT
         $objectName = $entityReflection->getShortName();
         $templating = $this->getContainer()->get('templating');
 
-
+dump($objectName);
+dump($fieldsInfo);
+//exit;
        
         $this->isFileNameBusy($fileName);
 
@@ -193,6 +195,7 @@ EOT
             "namespace" => $entityNamespace,
             "entityName" => $entityName,
             "objectName" => $objectName,
+            "lcObjectName" => lcfirst($objectName),
             "fieldsInfo" => $fieldsInfo,
             "gridConfigNamespaceName" => $this->namespace,
             "associated" => $associated
