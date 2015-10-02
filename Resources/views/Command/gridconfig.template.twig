@@ -95,11 +95,12 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
     {% for field, fieldParam in fieldsInfo %}
 /** field {{field}} configuration */    
     
-    /*
+    
       
     {% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}${{field}} = $grid->getColumn('{{field}}.{{fieldParam.default_field}}'); 
-      ${{field}}->setTitle('{{objectName}}.{{field}}.{{fieldParam.default_field}}');{% else %}  ${{field}} = $grid->getColumn('{{field}}'); 
-      ${{field}}->setTitle('{{objectName}}.{{field}}');{% endif %}    
+      ${{field}}->setTitle('{{field}}.{{fieldParam.default_field}}');{% else %}  ${{field}} = $grid->getColumn('{{field}}'); 
+      ${{field}}->setTitle('{{lcObjectName}}.{{field}}');{% endif %}    
+      /*
       //${{field}}->setSafe(false); // not convert html entities
       ${{field}}->manipulateRenderCell(function($value, $row) {
        //return strip_tags($value); //use this function when setSafe is false
