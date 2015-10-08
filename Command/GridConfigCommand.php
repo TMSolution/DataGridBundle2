@@ -30,13 +30,14 @@ class GridConfigCommand extends ContainerAwareCommand
     protected $manyToManyRelationExists;
     protected $directory;
     protected $namespace;
-    
+
     protected function configure()
     {
         $this->setName('datagrid:generate:grid:config')
                 ->setDescription("Generate widget and template\r\n use --associated to create associated Grid Config")
                 ->addArgument('entity', InputArgument::REQUIRED, 'Insert entity class name')
                 ->addArgument('path', InputArgument::OPTIONAL, 'Insert path')
+                ->addArgument('rootFolder', InputArgument::OPTIONAL, 'Insert form type path')
                 ->addOption('associated', null, InputOption::VALUE_NONE, 'Insert associated param');
 
         $this->setHelp(<<<EOT
@@ -75,38 +76,60 @@ EOT
         return $classPath;
     }
 
-    
+    /* protected function createDirectory($classPath, $entityNamespace, $objectName, $path)
+      {
 
-    protected function createDirectory($classPath, $entityNamespace, $objectName, $path)
+      //    die($entityNamespace);
+      if ($path) {
+      $path = DIRECTORY_SEPARATOR . $path;
+      }
+
+      $this->directory = str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace));
+      $this->directory = $this->replaceLast("Entity", "Config" . $path . DIRECTORY_SEPARATOR . $objectName, $this->directory);
+
+      if (is_dir($this->directory) == false) {
+      if (mkdir($this->directory, 0777, TRUE) == false) {
+      throw new UnexpectedValueException("Creating directory failed");
+      }
+      }
+      } */
+
+    protected function createDirectory($classPath, $entityNamespace, $objectName, $path, $rootFolder)
     {
 
-        //    die($entityNamespace);
         if ($path) {
-            $path = DIRECTORY_SEPARATOR . $path;
+            $entityNamespace = $entityNamespace . DIRECTORY_SEPARATOR . $path;
         }
 
-        $this->directory = str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace));
-        $this->directory = $this->replaceLast("Entity", "Config". $path . DIRECTORY_SEPARATOR . $objectName, $this->directory);
-       
-        if (is_dir($this->directory) == false) {
-            if (mkdir($this->directory, 0777, TRUE) == false) {
-                throw new UnexpectedValueException("Creating directory failed");
+        $directory = $this->replaceLast("Entity", "Config\\" . $rootFolder, str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace)));
+
+        if (is_dir($directory) == false) {
+            if (mkdir($directory, 0777, true) == false) {
+                throw new UnexpectedValueException("Creating directory failed: " . $directory);
             }
         }
+
+
+        return $directory;
     }
-    
-    protected function createNameSpace($entityNamespace, $objectName, $path)
+
+    protected function createNameSpace($entityNamespace, $objectName, $path, $rootFolder)
     {
 
-        //    die($entityNamespace);
         if ($path) {
             $path = DIRECTORY_SEPARATOR . $path;
         }
 
+        if ($rootFolder) {
+            $rootFolder = DIRECTORY_SEPARATOR . $rootFolder;
+        }
+
+
+
         $this->namespace = str_replace("\\", DIRECTORY_SEPARATOR, $entityNamespace);
-        $this->namespace = $this->replaceLast("Entity", "Config" .$path. DIRECTORY_SEPARATOR . $objectName, $this->namespace);
-        
-        
+        $this->namespace = $this->replaceLast("Entity", "Config" . $rootFolder . $path /*. DIRECTORY_SEPARATOR . $objectName*/, $this->namespace);
+
+        return $this->namespace;
     }
 
     protected function calculateFileName($entityReflection)
@@ -163,33 +186,21 @@ EOT
         return $fieldsInfo;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function addFile($fieldsInfo, $entityName, $path, $output, $associated = false, $rootFolder)
     {
 
-        $entityName = $this->getEntityName($input);
-        $model = $this->getContainer()->get("model_factory")->getModel($entityName);
-        $fieldsInfo = $this->analizeFieldName($model->getFieldsInfo());
         $classPath = $this->getClassPath($entityName);
         $entityReflection = new ReflectionClass($entityName);
         $entityNamespace = $entityReflection->getNamespaceName();
         $objectName = $entityReflection->getShortName();
-        $path = $input->getArgument('path');
-        $this->createDirectory($classPath, $entityNamespace, $objectName, $path);
-        $this->createNameSpace($entityNamespace, $objectName, $path);
-        
-        $fileName = $this->directory.DIRECTORY_SEPARATOR.'GridConfig.php';
 
-        $objectName = $entityReflection->getShortName();
+        $this->directory = $this->createDirectory($classPath, $entityNamespace, $objectName, $path, $rootFolder);
+        $namespace = $this->createNameSpace($entityNamespace, $objectName, $path, $rootFolder);
+
+        $fileName = $this->directory . DIRECTORY_SEPARATOR . 'GridConfig.php';
+
         $templating = $this->getContainer()->get('templating');
-
-dump($objectName);
-dump($fieldsInfo);
-//exit;
-       
         $this->isFileNameBusy($fileName);
-
-
-        $associated = true === $input->getOption('associated');
 
         $renderedConfig = $templating->render("TMSolutionDataGridBundle:Command:gridconfig.template.twig", [
             "namespace" => $entityNamespace,
@@ -197,12 +208,47 @@ dump($fieldsInfo);
             "objectName" => $objectName,
             "lcObjectName" => lcfirst($objectName),
             "fieldsInfo" => $fieldsInfo,
-            "gridConfigNamespaceName" => $this->namespace,
+            "gridConfigNamespaceName" => $namespace,
             "associated" => $associated
         ]);
 
         file_put_contents($fileName, $renderedConfig);
-        $output->writeln("Grid config generated");
+        $output->writeln(sprintf("Grid config generated for <info>%s</info>", $entityName));
+    }
+
+    protected function runAssociatedObjects($fieldsInfo, $analyzeFieldsInfo, $entityName, $rootPath, $rootFolder, $output)
+    {
+        $associations = [];
+        foreach ($fieldsInfo as $key => $value) {
+
+            $associationTypes = ["OneToMany", "ManyToMany"];
+            $field = $fieldsInfo[$key];
+            if (array_key_exists("association", $field) && in_array($field["association"], $associationTypes)) {
+
+                $arr = explode('\\', $value['object_name']);
+                $path = array_pop($arr);
+                $this->addFile($analyzeFieldsInfo, $value['object_name'], $rootPath . DIRECTORY_SEPARATOR . $path, $output, TRUE, $rootFolder);
+            }
+        }
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+
+        $entityName = $this->getEntityName($input);
+        $path = $input->getArgument('path');
+        $rootFolder = $input->getArgument('rootFolder');
+        $associated = true === $input->getOption('associated');
+        $model = $this->getContainer()->get("model_factory")->getModel($entityName);
+        $fieldsInfo = $model->getFieldsInfo();
+        $analyzeFieldsInfo = $this->analizeFieldName($model->getFieldsInfo());
+
+        $this->addFile($analyzeFieldsInfo, $entityName, $path, $output, FALSE, $rootFolder);
+
+        //generate assoc form types
+        if (true === $input->getOption('associated')) {
+            $this->runAssociatedObjects($fieldsInfo, $analyzeFieldsInfo, $entityName, $path, $rootFolder, $output);
+        }
     }
 
 }
