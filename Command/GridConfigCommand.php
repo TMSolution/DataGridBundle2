@@ -193,7 +193,8 @@ EOT
         $entityReflection = new ReflectionClass($entityName);
         $entityNamespace = $entityReflection->getNamespaceName();
         $objectName = $entityReflection->getShortName();
-
+        $lowerNameSpaceForTranslate = str_replace('bundle.entity', '', str_replace('\\', '.', strtolower($entityNamespace)));
+        
         $this->directory = $this->createDirectory($classPath, $entityNamespace, $objectName, $path, $rootFolder);
         $namespace = $this->createNameSpace($entityNamespace, $objectName, $path, $rootFolder);
 
@@ -209,7 +210,8 @@ EOT
             "lcObjectName" => lcfirst($objectName),
             "fieldsInfo" => $fieldsInfo,
             "gridConfigNamespaceName" => $namespace,
-            "associated" => $associated
+            "associated" => $associated,
+            "lowerNameSpaceForTranslate" => $lowerNameSpaceForTranslate
         ]);
 
         file_put_contents($fileName, $renderedConfig);
