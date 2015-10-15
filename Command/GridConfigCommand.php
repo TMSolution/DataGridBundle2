@@ -225,9 +225,17 @@ EOT
             $field = $fieldsInfo[$key];
             if (array_key_exists("association", $field) && in_array($field["association"], $associationTypes)) {
 
+          
+                $model = $this->getContainer()->get("model_factory")->getModel($value['object_name']);
+                $assocObjectFieldsInfo = $model->getFieldsInfo();
+                $assocObjectAnalyzeFieldsInfo = $this->analizeFieldName($assocObjectFieldsInfo);
+
+
+
                 $arr = explode('\\', $value['object_name']);
                 $path = array_pop($arr);
-                $this->addFile($analyzeFieldsInfo, $value['object_name'], $rootPath . DIRECTORY_SEPARATOR . $path, $output, TRUE, $rootFolder);
+
+                $this->addFile($assocObjectAnalyzeFieldsInfo, $value['object_name'], $rootPath . DIRECTORY_SEPARATOR . $path, $output, TRUE, $rootFolder);
             }
         }
     }
