@@ -144,7 +144,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
         {% if associated %}$rowAction->setRouteParameters($parameters);{% else %}$rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);{% endif %}
         $grid->addRowAction($rowAction);
     
-        $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix.'_update', false, null, ['id' => '{{objectName|lower}}-update-button', 'class' => 'button-class', 'data-original-title' => 'Edit']);
+        $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix.'_edit', false, null, ['id' => '{{objectName|lower}}-update-button', 'class' => 'button-class', 'data-original-title' => 'Edit']);
         {% if associated %}$rowAction->setRouteParameters($parameters);{% else %}$rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);{% endif %}
         $grid->addRowAction($rowAction);
         
