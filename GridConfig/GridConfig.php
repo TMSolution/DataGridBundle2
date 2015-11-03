@@ -65,13 +65,31 @@ class GridConfig {
         return $fieldsInfo;
     }
 
-    protected function getColumnTitle($objectName, $defaultName) {
+    protected function getColumnTitle($objectName, $defaultName = null, $parentObject = null) {
+
 
         $entityReflection = new \ReflectionClass($objectName);
         $entityNamespace = $entityReflection->getNamespaceName();
         $objectName = $entityReflection->getShortName();
+
+
+        if ($parentObject) {
+            $parentEntityReflection = new \ReflectionClass($parentObject);
+            $parentEntityNamespace = $parentEntityReflection->getNamespaceName();
+            $parentObjectName = $parentEntityReflection->getShortName();
+        }
+
         $lowerNameSpaceForTranslate = str_replace('bundle.entity', '', str_replace('\\', '.', strtolower($entityNamespace)));
-        return "{$lowerNameSpaceForTranslate}." . lcfirst($objectName) . ".{$defaultName}";
+        if ($defaultName && !$parentObject) {
+
+            return "{$lowerNameSpaceForTranslate}." . strtolower($objectName) . ".{$defaultName}";
+        } else {
+            if ($parentObject) {
+                return "{$lowerNameSpaceForTranslate}." . strtolower("$parentObjectName.") . lcfirst($objectName) . ".{$defaultName}";
+            } else {
+                return "{$lowerNameSpaceForTranslate}." . strtolower($objectName);
+            }
+        }
     }
 
     protected function configureColumns($grid) {
@@ -87,7 +105,8 @@ class GridConfig {
                 $column = new $fieldType(array('id' => "{$field}.{$fieldParam['default_field']}", 'field' => "{$field}.{$fieldParam['default_field']}", 'title' => "{$field}.{$fieldParam['default_field']}", 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true));
                 $column->setFilterType('select');
                 $column->setSelectExpanded(FALSE);
-                $column->setTitle($this->getColumnTitle($fieldParam['object_name'], $fieldParam['default_field']));
+
+                $column->setTitle($this->getColumnTitle($fieldParam['object_name'], $fieldParam['default_field'], $this->objectName));
 
 
                 $grid->addColumn($column, $columnOrder = null);
