@@ -359,6 +359,42 @@ class Grid extends BaseGrid
 
         return $this;
     }
+    
+     public function getGridConfig($param1 = null, $param2 = null, Response $response = null)
+    {
+        $isReadyForRedirect = $this->isReadyForRedirect();
+
+        if ($this->isReadyForExport()) {
+            return $this->getExportResponse();
+        }
+
+        if ($this->isMassActionRedirect()) {
+            return $this->getMassActionResponse();
+        }
+
+       
+            if (is_array($param1) || $param1 === null) {
+                $parameters = (array) $param1;
+                $view = $param2;
+            } else {
+                $parameters = (array) $param2;
+                $view = $param1;
+            }
+
+            $parameters = array_merge(array('grid' => $this), $parameters);
+
+            if ($view === null) {
+                return $parameters;
+            } else {
+                
+                $config= new \StdClass();
+                $config->view=$view;
+                $config->parameters=$parameters;
+                $config->response=$response;
+                return $config;
+            }
+        
+    }
 
    
 
