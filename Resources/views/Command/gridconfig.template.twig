@@ -54,7 +54,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
       
        $queryBuilder->resetDQLPart('select');
        $queryBuilder->resetDQLPart('join');
-       $queryBuilder->select({% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' )  %}'_{{field}}.{{fieldParam.default_field}} as {{field}}::{{fieldParam.default_field}}{% if not loop.last %},'.{% else %}'{% endif %}{% else %}$tableAlias.'.{{field}}{% if  not loop.last %},'.{% else %}'{% endif %}{% endif %}{% endfor %});
+       $queryBuilder->select({% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' )  %} '_{{field}}.{{fieldParam.default_field}} as {{field}}::{{fieldParam.default_field}} {% if fieldParam.default_field!='id' %},'.'_{{field}}.id as {{field}}::id {% endif %}{% if not loop.last %},'.{% else %}'{% endif %}{% else %}$tableAlias.'.{{field}}{% if  not loop.last %},'.{% else %}'{% endif %}{% endif %}{% endfor %});
 
 {% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' ) %}
        $queryBuilder->leftJoin("$tableAlias.{{field}}","_{{field}}");
@@ -100,17 +100,14 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
     {% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}${{field}} = $grid->getColumn('{{field}}.{{fieldParam.default_field}}'); 
       ${{field}}->setTitle('{{lowerNameSpaceForTranslate}}.{{lcObjectName}}.{{field}}.{{fieldParam.default_field}}');
       
-      
         $objectName = $this->getContainer()->get('classmapperservice')->getEntityName('{{fieldParam.object_name}}');
-        $column->setSafe(false);
-        
-        
-        $column->manipulateRenderCell(function($value, $row) {
+        ${{field}}->setSafe(false);
+        ${{field}}->manipulateRenderCell(function($value, $row) {
 
             if ($value) {
 
                 $route = $this->getContainer()->get('router')->generate('core_prototype_defaultcontroller_read', array(
-                    "id" => $row->getField("{{field}}.id"),
+                    "id" => $row->getField("{{field}}.{{fieldParam.default_field}}"),
                     "containerName" => "container",
                     "actionId" => "default",
                     'entityName' => "{{lcObjectName}}"
@@ -123,8 +120,6 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
             }
         });
 
-                
-                
                 
                 
       
