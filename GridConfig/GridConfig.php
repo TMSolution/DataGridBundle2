@@ -109,6 +109,28 @@ class GridConfig {
                 $column->setTitle($this->getColumnTitle($fieldParam['object_name'], $fieldParam['default_field'], $this->objectName));
 
 
+                $objectName = $this->getContainer()->get('classmapperservice')->getEntityName($fieldParam['object_name']);
+                $column->setSafe(false); // not convert html entities
+                $column->manipulateRenderCell(function($value, $row) use ($field, $fieldParam, $objectName) {
+
+                    if ($value) {
+
+                        $route = $this->getContainer()->get('router')->generate('core_prototype_defaultcontroller_read', array(
+                            "id" => $row->getField($field . '.id'),
+                            "containerName" => "container",
+                            "actionId" => "default",
+                            'entityName' => $objectName
+                        ));
+                        
+                        $templating = $this->getContainer()->get('templating');
+                        $link = $templating->render("TMSolutionDataGridBundle::grid.column.template.html.twig", ['value'=>strip_tags($value), 'route'=>$route]);
+                        
+                        return $link;
+                    }
+                });
+
+
+
                 $grid->addColumn($column, $columnOrder = null);
                 $fields[] = "{$field}.{$fieldParam['default_field']}";
             } else {
@@ -151,6 +173,7 @@ class GridConfig {
 
                 if (array_key_exists('association', $fieldParam) && ($fieldParam['association'] == 'ManyToOne' || $fieldParam['association'] == 'OneToOne' )) {
                     $fields[] = "_{$field}.{$fieldParam['default_field']} as {$field}::{$fieldParam['default_field']}";
+                    $fields[] = "_{$field}.id as {$field}::id";
                 } else {
 
                     $fields[] = "{$tableAlias}.{$field}";
@@ -190,7 +213,7 @@ class GridConfig {
 
 
         $parametersArr = $this->request->attributes->all();
-        $parameters = ["id","containerName"=>"container","actionId"=>"default"];
+        $parameters = ["id", "containerName" => "container", "actionId" => "default"];
         $parameters = array_merge($parameters, $parametersArr["_route_params"]);
 
 
