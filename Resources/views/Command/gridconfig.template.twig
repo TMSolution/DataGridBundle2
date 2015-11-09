@@ -98,8 +98,38 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
     
       
     {% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}${{field}} = $grid->getColumn('{{field}}.{{fieldParam.default_field}}'); 
-      ${{field}}->setTitle('{{lowerNameSpaceForTranslate}}.{{field}}.{{fieldParam.default_field}}');{% else %}  ${{field}} = $grid->getColumn('{{field}}'); 
-      ${{field}}->setTitle('{{lowerNameSpaceForTranslate}}.{{lcObjectName}}.{{field}}');{% endif %}    
+      ${{field}}->setTitle('{{lowerNameSpaceForTranslate}}.{{lcObjectName}}.{{field}}.{{fieldParam.default_field}}');
+      
+      
+        $objectName = $this->getContainer()->get('classmapperservice')->getEntityName('{{fieldParam.object_name}}');
+        $column->setSafe(false);
+        
+        
+        $column->manipulateRenderCell(function($value, $row) {
+
+            if ($value) {
+
+                $route = $this->getContainer()->get('router')->generate('core_prototype_defaultcontroller_read', array(
+                    "id" => $row->getField("{{field}}.id"),
+                    "containerName" => "container",
+                    "actionId" => "default",
+                    'entityName' => "{{lcObjectName}}"
+                ));
+
+                $templating = $this->getContainer()->get('templating');
+                $link = $templating->render("TMSolutionDataGridBundle::grid.column.template.html.twig", ['value'=>strip_tags($value), 'route'=>$route]);
+
+                return $link;
+            }
+        });
+
+                
+                
+                
+                
+      
+    {% else %}  ${{field}} = $grid->getColumn('{{field}}'); 
+      ${{field}}->setTitle('{{lowerNameSpaceForTranslate}}.{{lcObjectName}}.{{field}}');  
       /*
       //${{field}}->setSafe(false); // not convert html entities
       ${{field}}->manipulateRenderCell(function($value, $row) {
@@ -108,6 +138,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
       });
    
     */
+    {% endif %}  
     {% endfor %}  
     }
 
