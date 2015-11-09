@@ -190,7 +190,7 @@ class GridConfig {
 
 
         $parametersArr = $this->request->attributes->all();
-        $parameters = ["id"];
+        $parameters = ["id","containerName"=>"container","actionId"=>"default"];
         $parameters = array_merge($parameters, $parametersArr["_route_params"]);
 
 
