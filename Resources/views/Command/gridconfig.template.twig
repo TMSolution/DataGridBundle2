@@ -27,7 +27,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
 
     public function buildGrid($grid,$routePrefix)
     {
-        {% if associated %}$this->request=$this->getContainer()->get('request');{% endif %}
+        $this->request=$this->getContainer()->get('request');
         
         $this->manipulateQuery($grid);
         $this->configureColumn($grid);
@@ -134,22 +134,26 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
 
     protected function configureRowButton($grid,$routePrefix)
     {
-        {% if associated %}
+    
+        
+    
+    
+      
         $parametersArr=$this->request->attributes->all();
-        $parameters=["id"];
+        $parameters = ["id","containerName"=>"container","actionId"=>"default"];
         $parameters=  array_merge($parameters,$parametersArr["_route_params"]);
-        {% endif %}
+      
 
         $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_read', false, null, ['id' => '{{objectName|lower}}-read-button', 'class' => 'button-class', 'data-original-title' => 'Show']);
-        {% if associated %}$rowAction->setRouteParameters($parameters);{% else %}$rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);{% endif %}
+        $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
     
         $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix.'_edit', false, null, ['id' => '{{objectName|lower}}-update-button', 'class' => 'button-class', 'data-original-title' => 'Edit']);
-        {% if associated %}$rowAction->setRouteParameters($parameters);{% else %}$rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);{% endif %}
+       $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
         
         $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => '{{objectName|lower}}-delete-button', 'class' => 'button-class', 'data-original-title' => 'Delete']);
-        {% if associated %}$rowAction->setRouteParameters($parameters);{% else %}$rowAction->setRouteParameters(['entityName' => '{{objectName|lower}}','id']);{% endif %}
+        $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
     }
 
