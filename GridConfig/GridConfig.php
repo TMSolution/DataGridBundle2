@@ -123,7 +123,7 @@ class GridConfig {
                         ));
                         
                         $templating = $this->getContainer()->get('templating');
-                        $link = $templating->render("TMSolutionDataGridBundle::grid.column.template.html.twig", ['value'=>strip_tags($value), 'route'=>$route]);
+                        $link = $templating->render("TMSolutionDataGridBundle::grid.column.template.twig", ['value'=>strip_tags($value), 'route'=>$route]);
                         
                         return $link;
                     }
