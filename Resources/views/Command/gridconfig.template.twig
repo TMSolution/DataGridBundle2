@@ -107,7 +107,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
             if ($value) {
 
                 $route = $this->getContainer()->get('router')->generate('core_prototype_defaultcontroller_read', array(
-                    "id" => $row->getField("{{field}}.{{fieldParam.default_field}}"),
+                    "id" => $row->getField("{{field}}.id"),
                     "containerName" => "container",
                     "actionId" => "default",
                     'entityName' => "{{lcObjectName}}"
