@@ -173,7 +173,7 @@ class GridConfig {
 
                 if (array_key_exists('association', $fieldParam) && ($fieldParam['association'] == 'ManyToOne' || $fieldParam['association'] == 'OneToOne' )) {
                     $fields[] = "_{$field}.{$fieldParam['default_field']} as {$field}::{$fieldParam['default_field']}";
-                    f($fieldParam['default_field']!='id'){
+                    if($fieldParam['default_field']!='id'){
                         $fields[] = "_{$field}.id as {$field}::id";
                     }
                 } else {
