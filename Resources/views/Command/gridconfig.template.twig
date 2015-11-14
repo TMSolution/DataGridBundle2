@@ -27,8 +27,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
 
     public function buildGrid($grid,$routePrefix)
     {
-        $this->request=$this->getContainer()->get('request');
-        
+        $this->init();
         $this->manipulateQuery($grid);
         $this->configureColumn($grid);
         $this->configureFilter($grid);
