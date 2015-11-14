@@ -18,14 +18,24 @@ class GridConfig {
     public function __construct($container) {
         $this->container = $container;
     }
-
-    public function buildGrid($grid, $routePrefix) {
-
+    
+    
+   protected function init()
+   {
         $this->request = $this->getContainer()->get('request');
+       
         $this->objectName = $this->request->get('objectName');
+        
         $this->model = $this->getContainer()->get('model_factory')->getModel($this->objectName);
         $this->analizedFieldsInfo = $this->analizeFieldsInfo($this->model->getFieldsInfo());
 
+       
+   }
+    
+
+    public function buildGrid($grid, $routePrefix) {
+
+        $this->init();
         $this->manipulateQuery($grid);
         $this->configureColumns($grid);
         $this->configureRowButton($grid, $routePrefix);
