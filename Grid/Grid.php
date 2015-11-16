@@ -101,6 +101,13 @@ class Grid extends BaseGrid
         $this->activeColumns = $activeColumns;
     }
 
+    public function getItems()
+    {
+        return $this->source->getItems();
+        
+    }
+
+
     /*
      * Metoda ustawia ilość column filtra
      */
