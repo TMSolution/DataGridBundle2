@@ -106,6 +106,10 @@ class Grid extends BaseGrid
         return $this->source->getItems();
         
     }
+    
+    public function getResult(){
+        return $this->source->getQuery()->getQuery()->getResult(\Doctrine\ORM\Query::HYDRATE_ARRAY);
+    }
 
 
     /*
