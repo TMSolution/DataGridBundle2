@@ -422,7 +422,7 @@ class Entity extends ApySourceEntity {
         return $qb;
     }
 
-    protected function getItems() {
+    public function getItems() {
         if ($this->items) {
             return $this->items;
         } else {
