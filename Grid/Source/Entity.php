@@ -29,8 +29,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Acl\Domain\ObjectIdentity;
 use Doctrine\ORM\Query\ResultSetMapping;
 
-class Entity extends ApySourceEntity
-{
+class Entity extends ApySourceEntity {
 
     /**
      * @var \Doctrine\ORM\EntityManager
@@ -96,6 +95,11 @@ class Entity extends ApySourceEntity
      * @var array
      */
     protected $hints;
+
+    /**
+     * @var ArrayCollection
+     */
+    protected $items;
 
     /**
      * The QueryBuilder that will be used to start generating query for the DataGrid
@@ -164,18 +168,15 @@ class Entity extends ApySourceEntity
       $this->setTableAlias(self::TABLE_ALIAS);
       } */
 
-    public function setExcludedColumns($excludedColumns)
-    {
+    public function setExcludedColumns($excludedColumns) {
         $this->excludedColumns = $excludedColumns;
     }
 
-    public function getExcludedColumns()
-    {
+    public function getExcludedColumns() {
         return $this->excludedColumns;
     }
 
-    public function __construct(\Core\ModelBundle\Model\Model $model, $group = 'default', $managerName = null, $metadata = null)
-    {
+    public function __construct(\Core\ModelBundle\Model\Model $model, $group = 'default', $managerName = null, $metadata = null) {
         $this->model = $model;
         $this->entityName = $model->getEntityClass();
         $this->managerName = $managerName;
@@ -194,13 +195,11 @@ class Entity extends ApySourceEntity
      * @return \Core\ModelBundle\Model\Model Model
      * @author Krzysiek Piasecki
      */
-    public function getModel()
-    {
+    public function getModel() {
         return $this->model;
     }
 
-    public function initialise($container)
-    {
+    public function initialise($container) {
         $doctrine = $container->get('doctrine');
         $this->manager = version_compare(Kernel::VERSION, '2.1.0', '>=') ? $doctrine->getManager($this->managerName) : $doctrine->getManager($this->managerName);
         $this->ormMetadata = $this->manager->getClassMetadata($this->entityName);
@@ -219,8 +218,7 @@ class Entity extends ApySourceEntity
         $this->groupBy = $this->metadata->getGroupBy();
     }
 
-    public function createQueryFilters($grid)
-    {
+    public function createQueryFilters($grid) {
 
 
 
@@ -321,8 +319,7 @@ class Entity extends ApySourceEntity
      * @param string $fieldName
      * @return string
      */
-    protected function getGroupByFieldName($fieldName)
-    {
+    protected function getGroupByFieldName($fieldName) {
         if (strpos($fieldName, '.') !== false) {
             $previousParent = '';
 
@@ -349,15 +346,13 @@ class Entity extends ApySourceEntity
      * @param \TMSolution\DataGridBundle\Grid\Columns $columns
      * @return null
      */
-    public function getColumns($columns)
-    {
+    public function getColumns($columns) {
         foreach ($this->metadata->getColumnsFromMapping($columns) as $column) {
             $columns->addColumn($column);
         }
     }
 
-    protected function normalizeOperator($operator)
-    {
+    protected function normalizeOperator($operator) {
 
 
         switch ($operator) {
@@ -372,8 +367,7 @@ class Entity extends ApySourceEntity
         }
     }
 
-    protected function normalizeValue($operator, $value)
-    {
+    protected function normalizeValue($operator, $value) {
 
 
         switch ($operator) {
@@ -401,8 +395,7 @@ class Entity extends ApySourceEntity
      * Sets the initial QueryBuilder for this DataGrid
      * @param QueryBuilder $queryBuilder
      */
-    public function initQueryBuilder(QueryBuilder $queryBuilder)
-    {
+    public function initQueryBuilder(QueryBuilder $queryBuilder) {
         $this->queryBuilder = clone $queryBuilder;
 
         //Try to guess the new root alias and apply it to our queries+        
@@ -416,8 +409,7 @@ class Entity extends ApySourceEntity
     /**
      * @return QueryBuilder
      */
-    protected function getQueryBuilder()
-    {
+    protected function getQueryBuilder() {
         //If a custom QB has been provided, use that
         //Otherwise create our own basic one
         if ($this->queryBuilder instanceof QueryBuilder) {
@@ -430,6 +422,14 @@ class Entity extends ApySourceEntity
         return $qb;
     }
 
+    protected function getItems() {
+        if ($this->items) {
+            return $this->items;
+        } else {
+            throw new \Exception('Items are not set!');
+        }
+    }
+
     /**
      * 
      * @param type $columns
@@ -439,8 +439,7 @@ class Entity extends ApySourceEntity
      * @param type $gridDataJunction
      * @return \APY\DataGridBundle\Grid\Rows
      */
-    public function execute($columns, $page = 0, $limit = 0, $maxResults = null, $gridDataJunction = Column::DATA_CONJUNCTION)
-    {
+    public function execute($columns, $page = 0, $limit = 0, $maxResults = null, $gridDataJunction = Column::DATA_CONJUNCTION) {
 
         $this->query = $this->getQueryBuilder();
         $this->querySelectfromSource = clone $this->query;
@@ -470,11 +469,11 @@ class Entity extends ApySourceEntity
 
                     // Some attributes of the column can be changed in this function
                     $filters = $column->getFilters('entity');
-       
+
                     $isDisjunction = $column->getDataJunction() === Column::DATA_DISJUNCTION;
 
                     $hasHavingClause = $column->hasDQLFunction() || $column->getIsAggregate();
-                    
+
 
                     $sub = $isDisjunction ? $this->query->expr()->orx() : ($hasHavingClause ? $this->query->expr()->andx() : $where);
 
@@ -495,11 +494,11 @@ class Entity extends ApySourceEntity
                             $sub->add($q);
 
 
-                           
+
                             $this->query->setParameter($bindIndex++, $this->normalizeValue($filter->getOperator(), $filter->getValue()));
                         }
                     }
-             
+
 
                     if ($hasHavingClause) {
                         $this->query->andHaving($sub);
@@ -581,30 +580,14 @@ class Entity extends ApySourceEntity
             $query->setHint($hintKey, $hintValue);
         }
 
-//die($query->getSQL());
 
         $query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER, 'TMSolution\DataGridBundle\Walker\MysqlWalker');
         $query->setHint("mysqlWalker.count", true);
 
-        $items = $query->getResult(\Doctrine\ORM\Query::HYDRATE_ARRAY);
+        $this->items = $query->getResult(\Doctrine\ORM\Query::HYDRATE_ARRAY);
 
         $this->prepareTotalCount();
-//        $oids = array();
-//        foreach ($items as $item) {
-//
-//            $oid = ObjectIdentity::fromDomainObject($item);
-//            $oids[] = $oid;
-//        }
-//
-//        $this->aclProvider->findAcls($oids); // preload Acls from database
-//
-//        foreach ($items as $item) {
-//            if (false === $this->securityContext->isGranted('VIEW', $item)) {
-//                // denied
-//                throw new AccessDeniedException();
-//            }
-//        }
-        // var_dump($items);
+
         $repository = $this->manager->getRepository($this->entityName);
 
         // Force the primary field to get the entity in the manipulatorRow
@@ -620,14 +603,16 @@ class Entity extends ApySourceEntity
         // hydrate result
         $result = new Rows();
 
-        foreach ($items as $item) {
+
+
+        foreach ($this->items as $item) {
             $row = new Row();
 
             foreach ($item as $key => $value) {
                 $key = str_replace('::', '.', $key);
 
                 if (in_array($key, $serializeColumns) && is_string($value)) {
-                    //echo $value."\n";
+
                     @$value = unserialize($value);
                 }
 
@@ -650,8 +635,7 @@ class Entity extends ApySourceEntity
         return $result;
     }
 
-    public function getTotalCount($maxResults = null)
-    {
+    public function getTotalCount($maxResults = null) {
 
 
 
@@ -685,8 +669,7 @@ class Entity extends ApySourceEntity
         return $this->totalCount;
     }
 
-    public function prepareTotalCount()
-    {
+    public function prepareTotalCount() {
 
         $sql = 'SELECT FOUND_ROWS() AS foundRows';
         $rsm = new ResultSetMapping();
@@ -720,8 +703,7 @@ class Entity extends ApySourceEntity
       return  count($paginator);
       } */
 
-    public function getFieldsMetadata($class, $group = 'default')
-    {
+    public function getFieldsMetadata($class, $group = 'default') {
         $result = array();
 
 
@@ -787,8 +769,7 @@ class Entity extends ApySourceEntity
         return $result;
     }
 
-    protected function calculateAssociacion($field)
-    {
+    protected function calculateAssociacion($field) {
 
         $fieldNameArr = explode('.', $field);
         if (count($fieldNameArr) == 2) {
@@ -798,8 +779,7 @@ class Entity extends ApySourceEntity
         }
     }
 
-    public function populateSelectFilters($columns, $loop = false)
-    {
+    public function populateSelectFilters($columns, $loop = false) {
 
         foreach ($columns as $column) {
             $selectFrom = $column->getSelectFrom();
@@ -919,8 +899,7 @@ class Entity extends ApySourceEntity
         }
     }
 
-    public function delete(array $ids)
-    {
+    public function delete(array $ids) {
         $repository = $this->getRepository();
 
         foreach ($ids as $id) {
@@ -936,23 +915,19 @@ class Entity extends ApySourceEntity
         $this->manager->flush();
     }
 
-    public function getRepository()
-    {
+    public function getRepository() {
         return $this->manager->getRepository($this->entityName);
     }
 
-    public function getHash()
-    {
+    public function getHash() {
         return $this->entityName;
     }
 
-    public function addHint($key, $value)
-    {
+    public function addHint($key, $value) {
         $this->hints[$key] = $value;
     }
 
-    public function clearHints()
-    {
+    public function clearHints() {
         $this->hints = array();
     }
 
@@ -960,34 +935,29 @@ class Entity extends ApySourceEntity
      *  Set groupby column
      *  @param string $groupBy GroupBy column
      */
-    public function setGroupBy($groupBy)
-    {
+    public function setGroupBy($groupBy) {
         $this->groupBy = $groupBy;
     }
 
-    public function getEntityName()
-    {
+    public function getEntityName() {
         return $this->entityName;
     }
 
     /**
      * @param string $tableAlias
      */
-    public function setTableAlias($tableAlias)
-    {
+    public function setTableAlias($tableAlias) {
         $this->tableAlias = $tableAlias;
     }
 
     /**
      * @return string
      */
-    public function getTableAlias()
-    {
+    public function getTableAlias() {
         return $this->tableAlias;
     }
 
-    protected function initializeFields()
-    {
+    protected function initializeFields() {
 
 
         if (empty($this->fields)) {
@@ -1016,14 +986,12 @@ class Entity extends ApySourceEntity
         return $this->fields;
     }
 
-    public function getField($name)
-    {
+    public function getField($name) {
         $this->initializeFields();
         return $this->fields[$name];
     }
 
-    public function hasAssociatedObjectField($associatedFieldName, $fieldName)
-    {
+    public function hasAssociatedObjectField($associatedFieldName, $fieldName) {
         $associatedField = $this->getField($associatedFieldName);
         $metadata = $this->model->getManager()->getClassMetadata($associatedField["mapping"]["targetEntity"]);
         if ($metadata->hasField($fieldName)) {
@@ -1036,8 +1004,7 @@ class Entity extends ApySourceEntity
      * Zwraca tablicę metadata do konfiguracji grida.
      * UWAGA! To nie jest Metadata z Doctrina
      */
-    public function createMetadata()
-    {
+    public function createMetadata() {
 
 
         $fields = $this->initializeFields();
@@ -1089,20 +1056,17 @@ class Entity extends ApySourceEntity
         return $this->metadata;
     }
 
-    public function getMetadata()
-    {
+    public function getMetadata() {
         return $this->metadata;
     }
 
-    private function camelize($string)
-    {
+    private function camelize($string) {
         return preg_replace_callback('/(^|_|\.)+(.)/', function ($match) {
             return ('.' === $match[1] ? '_' : '') . strtoupper($match[2]);
         }, $string);
     }
 
-    private function checkProperty($property)
-    {
+    private function checkProperty($property) {
 
         $camelProp = $this->camelize($property);
         //$this->reflectionClass = new \ReflectionClass($object);
