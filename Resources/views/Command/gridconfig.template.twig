@@ -25,17 +25,7 @@ use TMSolution\DataGridBundle\Grid\Action\RowAction;
 class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseGridConfig{% endif %}
 {
 
-    public function buildGrid($grid,$routePrefix)
-    {
-        $this->init();
-        $this->manipulateQuery($grid);
-        $this->configureColumn($grid);
-        $this->configureFilter($grid);
-        $this->configureExport($grid);
-        $this->configureRowButton($grid,$routePrefix);
-        
-        return $grid; 
-    }
+ 
     
    protected function manipulateQuery($grid)
     {
