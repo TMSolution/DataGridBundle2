@@ -167,6 +167,11 @@ class Entity extends ApySourceEntity {
       $this->hints = array();
       $this->setTableAlias(self::TABLE_ALIAS);
       } */
+    
+    public function getQuery()
+    {
+        return $this->query;
+    }
 
     public function setExcludedColumns($excludedColumns) {
         $this->excludedColumns = $excludedColumns;
