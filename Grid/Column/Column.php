@@ -16,8 +16,7 @@ use Symfony\Component\Security\Core\SecurityContextInterface;
 use APY\DataGridBundle\Grid\Filter;
 use APY\DataGridBundle\Grid\Column\Column as BaseColumn;
 
-abstract class Column extends BaseColumn
-{
+abstract class Column extends BaseColumn {
 
     const DEFAULT_VALUE = null;
 
@@ -94,20 +93,21 @@ abstract class Column extends BaseColumn
     protected $isManualField;
     protected $isAggregate;
     protected $usePrefixTitle;
+    protected $valueField;
+    protected $sortField;
+    protected $limit;
 
     /**
      * Default Column constructor
      *
      * @param array $params
      */
-    public function __construct($params = null)
-    {
+    public function __construct($params = null) {
 
         $this->__initialize((array) $params);
     }
 
-    public function __initialize(array $params)
-    {
+    public function __initialize(array $params) {
         $this->params = $params;
         $this->setId($this->getParam('id'));
         $this->setTitle($this->getParam('title', ''));
@@ -124,11 +124,17 @@ abstract class Column extends BaseColumn
         $this->setOrder($this->getParam('order'));
         $this->setJoinType($this->getParam('joinType'));
         $this->setFilterType($this->getParam('filter', 'input'));
-        $this->setSelectFrom($this->getParam('selectFrom', 'query'));
+        $this->setSelectFrom($this->getParam('selectFrom', 'source'));
         $this->setValues($this->getParam('values', array()));
         $this->setOperatorsVisible($this->getParam('operatorsVisible', true));
         $this->setIsManualField($this->getParam('isManualField', false));
         $this->setIsAggregate($this->getParam('isAggregate', false));
+
+        //tmsolution
+        $this->setValueField($this->getParam('valueField', 'id'));
+        $this->setSortField($this->getParam('sortField', null));
+        $this->setLimit($this->getParam('limit', null));
+
         // Order is important for the order display
         $this->setOperators($this->getParam('operators', array(
                     self::OPERATOR_EQ,
@@ -158,8 +164,7 @@ abstract class Column extends BaseColumn
         $this->setClass($this->getParam('class'));
     }
 
-    protected function getParam($id, $default = null)
-    {
+    protected function getParam($id, $default = null) {
         return isset($this->params[$id]) ? $this->params[$id] : $default;
     }
 
@@ -171,8 +176,7 @@ abstract class Column extends BaseColumn
      * @param $router
      * @return string
      */
-    public function renderCell($value, $row, $router)
-    {
+    public function renderCell($value, $row, $router) {
         if (is_callable($this->callback)) {
             return call_user_func($this->callback, $value, $row, $router);
         }
@@ -191,8 +195,7 @@ abstract class Column extends BaseColumn
      * @param  $callback
      * @return self
      */
-    public function manipulateRenderCell($callback)
-    {
+    public function manipulateRenderCell($callback) {
         $this->callback = $callback;
 
         return $this;
@@ -204,8 +207,7 @@ abstract class Column extends BaseColumn
      * @param $id
      * @return self
      */
-    public function setId($id)
-    {
+    public function setId($id) {
         $this->id = $id;
 
         return $this;
@@ -216,8 +218,7 @@ abstract class Column extends BaseColumn
      *
      * @return int|string
      */
-    public function getId()
-    {
+    public function getId() {
         return $this->id;
     }
 
@@ -226,8 +227,7 @@ abstract class Column extends BaseColumn
      *
      * @return int|string
      */
-    public function getRenderBlockId()
-    {
+    public function getRenderBlockId() {
         // For Mapping fields and aggregate dql functions
         return str_replace(array('.', ':'), '_', $this->id);
     }
@@ -238,8 +238,7 @@ abstract class Column extends BaseColumn
      * @param string $title
      * @return \TMSolution\DataGridBundle\Grid\Column\Column
      */
-    public function setTitle($title)
-    {
+    public function setTitle($title) {
         $this->title = $title;
 
         return $this;
@@ -250,9 +249,33 @@ abstract class Column extends BaseColumn
      *
      * @return string
      */
-    public function getTitle()
-    {
+    public function getTitle() {
         return $this->title;
+    }
+
+    public function setValueField($valueField) {
+        $this->valueField = $valueField;
+    }
+
+    public function getValueField() {
+        return $this->valueField;
+    }
+
+    public function setSortField($sortField) {
+        $this->sortField = $sortField;
+    }
+
+    public function getSortField() {
+        return $this->sortField;
+    }
+    
+    
+    public function setLimit($limit) {
+        $this->limit = $limit;
+    }
+
+    public function getLimit() {
+        return $this->limit;
     }
 
     /**
@@ -260,8 +283,7 @@ abstract class Column extends BaseColumn
      *
      * @param boolean $visible
      */
-    public function setVisible($visible)
-    {
+    public function setVisible($visible) {
         $this->visible = $visible;
 
         return $this;
@@ -272,8 +294,7 @@ abstract class Column extends BaseColumn
      *
      * @return bool return true when column is visible
      */
-    public function isVisible($isExported = false)
-    {
+    public function isVisible($isExported = false) {
         $visible = $isExported && $this->export !== null ? $this->export : $this->visible;
 
         if ($visible && $this->securityContext !== null && $this->getRole() != null) {
@@ -288,13 +309,11 @@ abstract class Column extends BaseColumn
      *
      * @return bool return true when column is sorted
      */
-    public function isSorted()
-    {
+    public function isSorted() {
         return $this->isSorted;
     }
 
-    public function setSortable($sortable)
-    {
+    public function setSortable($sortable) {
         $this->sortable = $sortable;
 
         return $this;
@@ -305,8 +324,7 @@ abstract class Column extends BaseColumn
      *
      * @return bool return true when column can be sorted
      */
-    public function isSortable()
-    {
+    public function isSortable() {
         return $this->sortable;
     }
 
@@ -315,13 +333,11 @@ abstract class Column extends BaseColumn
      *
      * @return boolean return true when column is filtered
      */
-    public function isFiltered()
-    {
+    public function isFiltered() {
         return ( (isset($this->data['from']) && $this->isQueryValid($this->data['from']) && $this->data['from'] != static::DEFAULT_VALUE) || (isset($this->data['to']) && $this->isQueryValid($this->data['to']) && $this->data['to'] != static::DEFAULT_VALUE) || (isset($this->data['operator']) && ($this->data['operator'] === self::OPERATOR_ISNULL || $this->data['operator'] === self::OPERATOR_ISNOTNULL)) );
     }
 
-    public function setFilterable($filterable)
-    {
+    public function setFilterable($filterable) {
         $this->filterable = $filterable;
 
         return $this;
@@ -332,8 +348,7 @@ abstract class Column extends BaseColumn
      *
      * @return bool return true when column can be filtred
      */
-    public function isFilterable()
-    {
+    public function isFilterable() {
         return $this->filterable;
     }
 
@@ -343,8 +358,7 @@ abstract class Column extends BaseColumn
      * @param string $order asc|desc
      * @return \TMSolution\DataGridBundle\Grid\Column\Column
      */
-    public function setOrder($order)
-    {
+    public function setOrder($order) {
         if ($order !== null) {
             $this->order = $order;
             $this->isSorted = true;
@@ -358,8 +372,7 @@ abstract class Column extends BaseColumn
      *
      * @return string asc|desc
      */
-    public function getOrder()
-    {
+    public function getOrder() {
         return $this->order;
     }
 
@@ -369,8 +382,7 @@ abstract class Column extends BaseColumn
      * @param int $size in pixels
      * @return \TMSolution\DataGridBundle\Grid\Column\Column
      */
-    public function setSize($size)
-    {
+    public function setSize($size) {
         if ($size < -1) {
             throw new \InvalidArgumentException(sprintf('Unsupported column size %s, use positive value or -1 for auto resize', $size));
         }
@@ -385,8 +397,7 @@ abstract class Column extends BaseColumn
      *
      * @return int column width in pixels
      */
-    public function getSize()
-    {
+    public function getSize() {
         return $this->size;
     }
 
@@ -396,8 +407,7 @@ abstract class Column extends BaseColumn
      * @param  $data
      * @return \TMSolution\DataGridBundle\Grid\Column\Column
      */
-    public function setData($data)
-    {
+    public function setData($data) {
         $this->data = array('operator' => $this->getDefaultOperator(), 'from' => static::DEFAULT_VALUE, 'to' => static::DEFAULT_VALUE);
 
         $hasValue = false;
@@ -424,8 +434,7 @@ abstract class Column extends BaseColumn
      *
      * @return array data
      */
-    public function getData()
-    {
+    public function getData() {
 
         $result = array();
 
@@ -453,8 +462,7 @@ abstract class Column extends BaseColumn
      *
      * @return boolean
      */
-    public function isQueryValid($query)
-    {
+    public function isQueryValid($query) {
         return true;
     }
 
@@ -463,8 +471,7 @@ abstract class Column extends BaseColumn
      * @param $value
      * @return \TMSolution\DataGridBundle\Grid\Column\Column
      */
-    public function setVisibleForSource($visibleForSource)
-    {
+    public function setVisibleForSource($visibleForSource) {
         $this->visibleForSource = $visibleForSource;
 
         return $this;
@@ -474,8 +481,7 @@ abstract class Column extends BaseColumn
      * Return true is column in visible for source class
      * @return boolean
      */
-    public function isVisibleForSource()
-    {
+    public function isVisibleForSource() {
         return $this->visibleForSource;
     }
 
@@ -484,8 +490,7 @@ abstract class Column extends BaseColumn
      *
      * @param boolean $primary
      */
-    public function setPrimary($primary)
-    {
+    public function setPrimary($primary) {
         $this->primary = $primary;
 
         return $this;
@@ -495,8 +500,7 @@ abstract class Column extends BaseColumn
      * Return true is column in primary
      * @return boolean
      */
-    public function isPrimary()
-    {
+    public function isPrimary() {
         return $this->primary;
     }
 
@@ -504,8 +508,7 @@ abstract class Column extends BaseColumn
      * Set column align
      * @param string $align left/right/center
      */
-    public function setAlign($align)
-    {
+    public function setAlign($align) {
         if (!in_array($align, self::$aligns)) {
             throw new \InvalidArgumentException(sprintf('Unsupported align %s, just left, right and center are supported', $align));
         }
@@ -519,64 +522,54 @@ abstract class Column extends BaseColumn
      * get column align
      * @return bool
      */
-    public function getAlign()
-    {
+    public function getAlign() {
         return $this->align;
     }
 
-    public function setInputType($inputType)
-    {
+    public function setInputType($inputType) {
         $this->inputType = $inputType;
 
         return $this;
     }
 
-    public function getInputType()
-    {
+    public function getInputType() {
         return $this->inputType;
     }
 
-    public function setField($field)
-    {
+    public function setField($field) {
         $this->field = $field;
 
         return $this;
     }
 
-    public function getField()
-    {
+    public function getField() {
         return $this->field;
     }
 
-    public function setRole($role)
-    {
+    public function setRole($role) {
         $this->role = $role;
 
         return $this;
     }
 
-    public function getRole()
-    {
+    public function getRole() {
         return $this->role;
     }
 
     /**
      * Filter
      */
-    public function setFilterType($filterType)
-    {
+    public function setFilterType($filterType) {
         $this->filterType = strtolower($filterType);
 
         return $this;
     }
 
-    public function getFilterType()
-    {
+    public function getFilterType() {
         return $this->filterType;
     }
 
-    public function getFilters($source)
-    {
+    public function getFilters($source) {
         $filters = array();
 
         if ($this->hasOperator($this->data['operator'])) {
@@ -631,8 +624,7 @@ abstract class Column extends BaseColumn
         return $filters;
     }
 
-    public function setDataJunction($dataJunction)
-    {
+    public function setDataJunction($dataJunction) {
         $this->dataJunction = $dataJunction;
 
         return $this;
@@ -643,13 +635,11 @@ abstract class Column extends BaseColumn
      *
      * @return bool self::DATA_CONJUNCTION | self::DATA_DISJUNCTION
      */
-    public function getDataJunction()
-    {
+    public function getDataJunction() {
         return $this->dataJunction;
     }
 
-    public function setOperators(array $operators)
-    {
+    public function setOperators(array $operators) {
         /* echo "<pre>";
           \Doctrine\Common\Util\Debug::dump($operators);
           echo "</pre>"; */
@@ -664,8 +654,7 @@ abstract class Column extends BaseColumn
      *
      * @return array $operators
      */
-    public function getOperators()
-    {
+    public function getOperators() {
         // Issue with Doctrine (See http://www.doctrine-project.org/jira/browse/DDC-1857 and http://www.doctrine-project.org/jira/browse/DDC-1858)
         if ($this->hasDQLFunction()) {
             return array_intersect($this->operators, array(self::OPERATOR_EQ,
@@ -681,8 +670,7 @@ abstract class Column extends BaseColumn
         return $this->operators;
     }
 
-    public function setDefaultOperator($defaultOperator)
-    {
+    public function setDefaultOperator($defaultOperator) {
         if (!$this->hasOperator($defaultOperator)) {
             throw new \Exception($defaultOperator . ' operator not found in operators list.');
         }
@@ -692,8 +680,7 @@ abstract class Column extends BaseColumn
         return $this;
     }
 
-    public function getDefaultOperator()
-    {
+    public function getDefaultOperator() {
         return $this->defaultOperator;
     }
 
@@ -703,69 +690,58 @@ abstract class Column extends BaseColumn
      * @param string $operator
      * @return boolean
      */
-    public function hasOperator($operator)
-    {
+    public function hasOperator($operator) {
         return in_array($operator, $this->operators);
     }
 
-    public function setOperatorsVisible($operatorsVisible)
-    {
+    public function setOperatorsVisible($operatorsVisible) {
         $this->operatorsVisible = $operatorsVisible;
 
         return $this;
     }
 
-    public function getOperatorsVisible()
-    {
+    public function getOperatorsVisible() {
         return $this->operatorsVisible;
     }
 
-    public function setValues(array $values)
-    {
+    public function setValues(array $values) {
+      
         $this->values = $values;
 
         return $this;
     }
 
-    public function getValues()
-    {
+    public function getValues() {
         return $this->values;
     }
 
-    public function setSelectFrom($selectFrom)
-    {
+    public function setSelectFrom($selectFrom) {
         $this->selectFrom = $selectFrom;
 
         return $this;
     }
 
-    public function getSelectFrom()
-    {
+    public function getSelectFrom() {
         return $this->selectFrom;
     }
 
-    public function getSelectMulti()
-    {
+    public function getSelectMulti() {
         return $this->selectMulti;
     }
 
-    public function setSelectMulti($selectMulti)
-    {
+    public function setSelectMulti($selectMulti) {
         $this->selectMulti = $selectMulti;
     }
 
-    public function getSelectExpanded()
-    {
+    public function getSelectExpanded() {
         return $this->selectExpanded;
     }
 
-    public function setSelectExpanded($selectExpanded)
-    {
+    public function setSelectExpanded($selectExpanded) {
         $this->selectExpanded = $selectExpanded;
     }
 
-    public function hasDQLFunction(&$matches = null)
-    {
+    public function hasDQLFunction(&$matches = null) {
         $regex = '/(?P<all>(?P<field>\w+):(?P<function>\w+)(:)?(?P<parameters>\w*))$/';
 
         return ($matches === null) ? preg_match($regex, $this->field) : preg_match($regex, $this->field, $matches);
@@ -776,20 +752,17 @@ abstract class Column extends BaseColumn
      *
      * @param $securityContext
      */
-    public function setSecurityContext(SecurityContextInterface $securityContext)
-    {
+    public function setSecurityContext(SecurityContextInterface $securityContext) {
         $this->securityContext = $securityContext;
 
         return $this;
     }
 
-    public function getParentType()
-    {
+    public function getParentType() {
         return '';
     }
 
-    public function getType()
-    {
+    public function getType() {
         return '';
     }
 
@@ -799,20 +772,17 @@ abstract class Column extends BaseColumn
      *
      * @todo Eventaully make this configurable via annotations?
      */
-    public function isFilterSubmitOnChange()
-    {
+    public function isFilterSubmitOnChange() {
         return !$this->getSelectMulti();
     }
 
-    public function setSearchOnClick($searchOnClick)
-    {
+    public function setSearchOnClick($searchOnClick) {
         $this->searchOnClick = $searchOnClick;
 
         return $this;
     }
 
-    public function getSearchOnClick()
-    {
+    public function getSearchOnClick() {
         return $this->searchOnClick;
     }
 
@@ -822,93 +792,77 @@ abstract class Column extends BaseColumn
      * @param string|bool $safeOption can be one of false, html, js, css, url, html_attr
      * @return \APY\DataGridBundle\Grid\Column\Column
      */
-    public function setSafe($safeOption)
-    {
+    public function setSafe($safeOption) {
         $this->safe = $safeOption;
 
         return $this;
     }
 
-    public function getSafe()
-    {
+    public function getSafe() {
         return $this->safe;
     }
 
-    public function setSeparator($separator)
-    {
+    public function setSeparator($separator) {
         $this->separator = $separator;
 
         return $this;
     }
 
-    public function getSeparator()
-    {
+    public function getSeparator() {
         return $this->separator;
     }
 
-    public function setJoinType($type)
-    {
+    public function setJoinType($type) {
         $this->joinType = $type;
 
         return $this;
     }
 
-    public function getJoinType()
-    {
+    public function getJoinType() {
         return $this->joinType;
     }
 
-    public function setExport($export)
-    {
+    public function setExport($export) {
         $this->export = $export;
 
         return $this;
     }
 
-    public function getExport()
-    {
+    public function getExport() {
         return $this->export;
     }
 
-    public function setClass($class)
-    {
+    public function setClass($class) {
         $this->class = $class;
 
         return $this;
     }
 
-    public function getClass()
-    {
+    public function getClass() {
         return $this->class;
     }
 
-    public function setIsManualField($isManualField)
-    {
+    public function setIsManualField($isManualField) {
         $this->isManualField = $isManualField;
     }
 
-    public function getIsManualField()
-    {
+    public function getIsManualField() {
         return $this->isManualField;
     }
 
-    public function setIsAggregate($isAggregate)
-    {
+    public function setIsAggregate($isAggregate) {
         $this->isAggregate = $isAggregate;
     }
 
-    public function getIsAggregate()
-    {
+    public function getIsAggregate() {
         return $this->isAggregate;
     }
 
-    public function getUsePrefixTitle()
-    {
+    public function getUsePrefixTitle() {
         return $this->usePrefixTitle;
     }
 
-    public function setUsePrefixTitle($usePrefixTitle)
-    {
+    public function setUsePrefixTitle($usePrefixTitle) {
         $this->usePrefixTitle = $usePrefixTitle;
         return $this;
     }
