@@ -107,8 +107,24 @@ class Grid extends BaseGrid
         
     }
     
-    public function getResult(){
-        return $this->source->getQuery()->getQuery()->getResult(\Doctrine\ORM\Query::HYDRATE_ARRAY);
+    public function getResult()
+    {
+
+
+        $result = $this->source->getQuery()->getQuery()->getResult(\Doctrine\ORM\Query::HYDRATE_ARRAY);
+
+        $rows = [];
+        foreach ($result as $item) {
+            $row=[];
+            foreach ($item as $key => $value) {
+                $key = str_replace('::', '.', $key);
+                $row[$key] = $value;
+                
+            }
+            $rows[]=$row;
+        }
+
+        return $rows;
     }
 
 
