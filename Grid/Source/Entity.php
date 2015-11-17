@@ -167,9 +167,8 @@ class Entity extends ApySourceEntity {
       $this->hints = array();
       $this->setTableAlias(self::TABLE_ALIAS);
       } */
-    
-    public function getQuery()
-    {
+
+    public function getQuery() {
         return $this->query;
     }
 
@@ -484,13 +483,20 @@ class Entity extends ApySourceEntity {
 
                     foreach ($filters as $filter) {
 
-
-                        // \Doctrine\Common\Util\Debug::dump($column);
+                       
+                        
+                        $nameArr=explode('.',$this->getFieldName($column, false));
+                        $field=$nameArr[count($nameArr)-1];
+                        if($field=='name')
+                        {
+                            $nameArr[count($nameArr)-1]=$column->getValueField();
+                        }    
+                        $fieldName=implode('.',$nameArr);
 
                         $operator = $this->normalizeOperator($filter->getOperator());
 
 
-                        $q = $this->query->expr()->$operator($this->getFieldName($column, false), "?$bindIndex");
+                        $q = $this->query->expr()->$operator($fieldName, "?$bindIndex");
 
                         if ($filter->getOperator() == Column::OPERATOR_NLIKE) {
                             $q = $this->query->expr()->not($q);
@@ -814,79 +820,62 @@ class Entity extends ApySourceEntity {
 
                     $association = $this->fields[$filedNameArr[0]];
 
-
-
-
                     if ($association) {
                         $qb = $this->manager->createQueryBuilder();
-                        $query = $qb->select('u.' . $filedNameArr[1])->from($association["targetEntity"], 'u')->getQuery();
 
+                        if ($filedNameArr[1] == 'name') {
+                            
+                            if($column->getSortField()){
+                                
+                               $order='u.'.$column->getSortField();
+                            }
+                            else
+                            {
+                                $order='u.'.$column->getValueField();
+                            };
+                            
+                            $query = $qb->select('u.' . $filedNameArr[1] . ',u.' . $column->getValueField())->from($association["targetEntity"], 'u')->setMaxResults($column->getLimit())->orderBy($order)->getQuery();
+                            $result = $query->getResult();
 
-                        /*
-                          $query = $qb->select()->getQuery()->getSQL();
-                          $query = $query->select($this->getFieldName($column, true))->fo
-                          // ->distinct()
+                            foreach ($result as $row) {
+                                $id = $row[$column->getValueField()];
+                                $value = $row[$filedNameArr[1]];
+                                 $values[$id] = $value;
+                            }
+                        } else {
 
-                          ->orderBy($this->getFieldName($column), 'asc')
-                          ->setFirstResult(null)
-                          ->setMaxResults(null)
-                          ->getQuery();
+                            $query = $qb->select('u.' . $filedNameArr[1])->from($association["targetEntity"], 'u')->setMaxResults($column->getLimit())->getQuery();
+                            $result = $query->getResult();
 
-                          die($query->getSQL()); */
+                            foreach ($result as $row) {
+                                $value = $row[$filedNameArr[1]];
 
-                        $result = $query->getResult();
-
-                        foreach ($result as $row) {
-                            $value = $row[$filedNameArr[1]];
-
-                            switch ($column->getType()) {
-                                case 'array':
-                                    if (is_string($value)) {
-                                        $value = unserialize($value);
-                                    }
-                                    foreach ($value as $val) {
-                                        $values[$val] = $val;
-                                    }
-                                    break;
-                                case 'number':
-                                    $values[$value] = $column->getDisplayedValue($value);
-                                    break;
-                                case 'datetime':
-                                case 'date':
-                                case 'time':
-                                    $displayedValue = $column->getDisplayedValue($value);
-                                    $values[$displayedValue] = $displayedValue;
-                                    break;
-                                default:
-                                    $values[$value] = $value;
+                                switch ($column->getType()) {
+                                    case 'array':
+                                        if (is_string($value)) {
+                                            $value = unserialize($value);
+                                        }
+                                        foreach ($value as $val) {
+                                            $values[$val] = $val;
+                                        }
+                                        break;
+                                    case 'number':
+                                        $values[$value] = $column->getDisplayedValue($value);
+                                        break;
+                                    case 'datetime':
+                                    case 'date':
+                                    case 'time':
+                                        $displayedValue = $column->getDisplayedValue($value);
+                                        $values[$displayedValue] = $displayedValue;
+                                        break;
+                                    default:
+                                        $values[$value] = $value;
+                                }
                             }
                         }
                     }
                 }
-                /*
-
-
-                  echo "<pre>";
-                  \Doctrine\Common\Util\Debug::dump($this->fields[]);
-                  echo "</pre>";
-                  exit;
-
-                  //
-
-                  echo $this->getFieldName($column, true).'<br/>';
-
-                  $query = $query->select($this->getFieldName($column, true))
-                  // ->distinct()
-
-                  ->orderBy($this->getFieldName($column), 'asc')
-                  ->setFirstResult(null)
-                  ->setMaxResults(null)
-                  ->getQuery();
-
-                  die($query->getSQL());
-
-                  $result   =   $query->getResult();
-                 */
+               
 
                 //$result =[];
                 // It avoids to have no result when the other columns are filtered
