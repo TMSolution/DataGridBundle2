@@ -1,6 +1,7 @@
 parameters:
 #    tm_solution_data_grid.example.class: TMSolution\DataGridBundle\Example
    grid.class: TMSolution\DataGridBundle\Grid\Grid
+   grid.twig_extension.class: TMSolution\DataGridBundle\Twig\DataGridExtension
 
 services:
 #    tm_solution_data_grid.example:
