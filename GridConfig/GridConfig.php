@@ -129,7 +129,7 @@ class GridConfig {
                 $realId= $field.'.'.$this->calculateRealID($fieldParam['default_field']);
                 
                 $fieldType = 'TMSolution\\DataGridBundle\\Grid\\Column\\' . $fieldParam["default_field_type"] . "Column";
-                $column = new $fieldType(array('id' =>$realId, 'field' => "{$field}.{$fieldParam['default_field']}", 'title' => "{$field}.{$fieldParam['default_field']}", 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true,'options'=>['eq']));
+                $column = new $fieldType(array('id' =>$realId, 'field' => "{$field}.{$fieldParam['default_field']}", 'title' => "{$field}.{$fieldParam['default_field']}", 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true,'operators'=>['eq']));
                 $column->setFilterType('select');
                 $column->setSelectExpanded(FALSE);
 
