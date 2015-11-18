@@ -1,52 +1,163 @@
 <?php
 
-namespace TMSolution\DataGridBundle\GridConfig;
+/**
+ * Copyright (c) 2014, TMSolution
+ * All rights reserved.
+ *
+ * For the full copyright and license information, please view
+ * the file LICENSE.md that was distributed with this source code.
+ */
 
-use TMSolution\DataGridBundle\Grid\Action\RowAction;
-use TMSolution\DataGridBundle\Grid\Column\NumberColumn;
-use TMSolution\DataGridBundle\Grid\Column\TextColumn;
+namespace TMSolution\DataGridBundle\Command;
 
-class GridConfig {
+use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Doctrine\Bundle\DoctrineBundle\Mapping\DisconnectedMetadataFactory;
+use ReflectionClass;
+use LogicException;
+use UnexpectedValueException;
 
-    protected $container;
-    protected $request;
-    protected $analizedFieldsInfo;
-    protected $objectName;
-    protected $model;
-    protected $manyToManyRelationExists = false;
+/**
+ * GridConfigCommand generates widget class and his template.
+ * @author Mariusz Piela <mariuszpiela@gmail.com>
+ */
+class GridConfigCommand extends ContainerAwareCommand
+{
 
-    public function __construct($container) {
-        $this->container = $container;
+    protected $manyToManyRelationExists;
+    protected $directory;
+    protected $namespace;
+
+    protected function configure()
+    {
+        $this->setName('datagrid:generate:grid:config')
+                ->setDescription("Generate widget and template\r\n use --associated to create associated Grid Config")
+                ->addArgument('entity', InputArgument::REQUIRED, 'Insert entity class name')
+                ->addArgument('path', InputArgument::OPTIONAL, 'Insert path')
+                ->addArgument('rootFolder', InputArgument::OPTIONAL, 'Insert form type path')
+                ->addOption('associated', null, InputOption::VALUE_NONE, 'Insert associated param');
+
+        $this->setHelp(<<<EOT
+The <info>%command.name%</info> generuje pliki konfiguracyjne dla gridów.
+
+W parametrze entity podajemy pełną nazwę encji.            
+<info>%command.name% entity </info>
+
+Alternatywnie można podać ścieżkę do folderu:
+
+<info>%command.name% entity path </info>
+
+Dla elementów podrzędnych podajemy parametr --associated
+
+<info>%command.name% entity --associated</info>
+
+EOT
+        );
     }
-    
-    
-   protected function init()
-   {
-        $this->request = $this->getContainer()->get('request');
-       
-        $this->objectName = $this->request->get('objectName');
-        
-        $this->model = $this->getContainer()->get('model_factory')->getModel($this->objectName);
-        $this->analizedFieldsInfo = $this->analizeFieldsInfo($this->model->getFieldsInfo());
 
-       
-   }
-    
+    protected function getEntityName($input)
+    {
+        $doctrine = $this->getContainer()->get('doctrine');
+        $entityName = str_replace('/', '\\', $input->getArgument('entity'));
+        if (($position = strpos($entityName, ':')) !== false) {
+            $entityName = $doctrine->getAliasNamespace(substr($entityName, 0, $position)) . '\\' . substr($entityName, $position + 1);
+        }
 
-    public function buildGrid($grid, $routePrefix) {
-
-        $this->init();
-        $this->manipulateQuery($grid);
-        $this->configureColumns($grid);
-        $this->configureRowButton($grid, $routePrefix);
-        return $grid;
+        return $entityName;
     }
 
-    public function getContainer() {
-        return $this->container;
+    protected function getClassPath($entityName)
+    {
+        $manager = new DisconnectedMetadataFactory($this->getContainer()->get('doctrine'));
+        $classPath = $manager->getClassMetadata($entityName)->getPath();
+        return $classPath;
     }
 
-    protected function analizeFieldsInfo($fieldsInfo) {
+    /* protected function createDirectory($classPath, $entityNamespace, $objectName, $path)
+      {
+
+      //    die($entityNamespace);
+      if ($path) {
+      $path = DIRECTORY_SEPARATOR . $path;
+      }
+
+      $this->directory = str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace));
+      $this->directory = $this->replaceLast("Entity", "Config" . $path . DIRECTORY_SEPARATOR . $objectName, $this->directory);
+
+      if (is_dir($this->directory) == false) {
+      if (mkdir($this->directory, 0777, TRUE) == false) {
+      throw new UnexpectedValueException("Creating directory failed");
+      }
+      }
+      } */
+
+    protected function createDirectory($classPath, $entityNamespace, $objectName, $path, $rootFolder)
+    {
+
+        if ($path) {
+            $entityNamespace = $entityNamespace . DIRECTORY_SEPARATOR . $path;
+        }
+
+        $directory = $this->replaceLast("Entity", "Config\\" . $rootFolder, str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace)));
+
+        if (is_dir($directory) == false) {
+            if (mkdir($directory, 0777, true) == false) {
+                throw new UnexpectedValueException("Creating directory failed: " . $directory);
+            }
+        }
+
+
+        return $directory;
+    }
+
+    protected function createNameSpace($entityNamespace, $objectName, $path, $rootFolder)
+    {
+
+        if ($path) {
+            $path = DIRECTORY_SEPARATOR . $path;
+        }
+
+        if ($rootFolder) {
+            $rootFolder = DIRECTORY_SEPARATOR . $rootFolder;
+        }
+
+
+
+        $this->namespace = str_replace("\\", DIRECTORY_SEPARATOR, $entityNamespace);
+        $this->namespace = $this->replaceLast("Entity", "Config" . $rootFolder . $path /*. DIRECTORY_SEPARATOR . $objectName*/, $this->namespace);
+
+        return $this->namespace;
+    }
+
+    protected function calculateFileName($entityReflection)
+    {
+
+        $fileName = $this->replaceLast("Entity", "Config", $entityReflection->getFileName());
+        return $fileName;
+    }
+
+    protected function isFileNameBusy($fileName)
+    {
+        if (file_exists($fileName) == true) {
+            throw new LogicException("File " . $fileName . " exists!");
+        }
+        return false;
+    }
+
+    protected function replaceLast($search, $replace, $subject)
+    {
+        $position = strrpos($subject, $search);
+        if ($position !== false) {
+            $subject = \substr_replace($subject, $replace, $position, strlen($search));
+        }
+        return $subject;
+    }
+
+    protected function analizeFieldName($fieldsInfo)
+    {
 
 
         foreach ($fieldsInfo as $key => $value) {
@@ -75,188 +186,79 @@ class GridConfig {
         return $fieldsInfo;
     }
 
-    protected function getColumnTitle($objectName, $defaultName = null, $parentObject = null) {
+    protected function addFile($fieldsInfo, $entityName, $path, $output, $associated = false, $rootFolder)
+    {
 
-
-        $entityReflection = new \ReflectionClass($objectName);
+        $classPath = $this->getClassPath($entityName);
+        $entityReflection = new ReflectionClass($entityName);
         $entityNamespace = $entityReflection->getNamespaceName();
         $objectName = $entityReflection->getShortName();
-
-
-        if ($parentObject) {
-            $parentEntityReflection = new \ReflectionClass($parentObject);
-            $parentEntityNamespace = $parentEntityReflection->getNamespaceName();
-            $parentObjectName = $parentEntityReflection->getShortName();
-        }
-
         $lowerNameSpaceForTranslate = str_replace('bundle.entity', '', str_replace('\\', '.', strtolower($entityNamespace)));
-        if ($defaultName && !$parentObject) {
+        
+        $this->directory = $this->createDirectory($classPath, $entityNamespace, $objectName, $path, $rootFolder);
+        $namespace = $this->createNameSpace($entityNamespace, $objectName, $path, $rootFolder);
 
-            return "{$lowerNameSpaceForTranslate}." . strtolower($objectName) . ".{$defaultName}";
-        } else {
-            if ($parentObject) {
-                return "{$lowerNameSpaceForTranslate}." . strtolower("$parentObjectName.") . lcfirst($objectName) . ".{$defaultName}";
-            } else {
-                return "{$lowerNameSpaceForTranslate}." . strtolower($objectName);
-            }
-        }
+        $fileName = $this->directory . DIRECTORY_SEPARATOR . 'GridConfig.php';
+
+        $templating = $this->getContainer()->get('templating');
+        $this->isFileNameBusy($fileName);
+
+        $renderedConfig = $templating->render("TMSolutionDataGridBundle:Command:gridconfig.template.twig", [
+            "namespace" => $entityNamespace,
+            "entityName" => $entityName,
+            "objectName" => $objectName,
+            "lcObjectName" => lcfirst($objectName),
+            "fieldsInfo" => $fieldsInfo,
+            "gridConfigNamespaceName" => $namespace,
+            "associated" => $associated,
+            "lowerNameSpaceForTranslate" => $lowerNameSpaceForTranslate
+        ]);
+
+        file_put_contents($fileName, $renderedConfig);
+        $output->writeln(sprintf("Grid config generated for <info>%s</info>", $entityName));
     }
 
-    
-    protected function calculateRealId($fieldName)
+    protected function runAssociatedObjects($fieldsInfo, $analyzeFieldsInfo, $entityName, $rootPath, $rootFolder, $output)
     {
-        if($fieldName=='name')
-        {
-            $fieldName='id';
-        }
-        return $fieldName;
-    }
-    
-    
-    protected function configureColumns($grid) {
+        $associations = [];
+        foreach ($fieldsInfo as $key => $value) {
 
-        $first = true;
-        $fields = [];
+            $associationTypes = ["OneToMany", "ManyToMany"];
+            $field = $fieldsInfo[$key];
+            if (array_key_exists("association", $field) && in_array($field["association"], $associationTypes)) {
 
-
-        foreach ($this->analizedFieldsInfo as $field => $fieldParam) {
-
-            if (array_key_exists('association', $fieldParam) && ($fieldParam['association'] == 'ManyToOne' || $fieldParam['association'] == 'OneToOne' )) {
-                
-                
-                
-                
-                $realId= $field.'.'.$this->calculateRealID($fieldParam['default_field']);
-                
-                $fieldType = 'TMSolution\\DataGridBundle\\Grid\\Column\\' . $fieldParam["default_field_type"] . "Column";
-                $column = new $fieldType(array('id' =>$realId, 'field' => "{$field}.{$fieldParam['default_field']}", 'title' => "{$field}.{$fieldParam['default_field']}", 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true,'options'=>['eq']));
-                $column->setFilterType('select');
-                $column->setSelectExpanded(FALSE);
-
-                $column->setTitle($this->getColumnTitle($fieldParam['object_name'], $fieldParam['default_field'], $this->objectName));
-
-                $objectName = $this->getContainer()->get('classmapperservice')->getEntityName($fieldParam['object_name']);
-                $column->setSafe(false); // not convert html entities
-                $column->manipulateRenderCell(function($value, $row) use ($field, $fieldParam, $objectName) {
-
-                    if ($value) {
-
-                        $route = $this->getContainer()->get('router')->generate('core_prototype_defaultcontroller_read', array(
-                            "id" => $row->getField($field . '.id'),
-                            "containerName" => "container",
-                            "actionId" => "default",
-                            'entityName' => $objectName
-                        ));
-                        
-                        $templating = $this->getContainer()->get('templating');
-                        $link = $templating->render("TMSolutionDataGridBundle::grid.column.template.twig", ['value'=>strip_tags($value), 'route'=>$route]);
-                        
-                        return $link;
-                    }
-                });
+          
+                $model = $this->getContainer()->get("model_factory")->getModel($value['object_name']);
+                $assocObjectFieldsInfo = $model->getFieldsInfo();
+                $assocObjectAnalyzeFieldsInfo = $this->analizeFieldName($assocObjectFieldsInfo);
 
 
 
-                $grid->addColumn($column, $columnOrder = null);
-                $fields[] = $realId;
-            } else {
-                $column = $grid->getColumn($field);
-                $column->setTitle($this->getColumnTitle($this->objectName, $field));
-                $fields[] = "{$field}";
-            }
+                $arr = explode('\\', $value['object_name']);
+                $path = array_pop($arr);
 
-            if ($first) {
-                $grid->setDefaultOrder($field, 'asc');
-                $first = false;
+                $this->addFile($assocObjectAnalyzeFieldsInfo, $value['object_name'], $rootPath . DIRECTORY_SEPARATOR . $path, $output, TRUE, $rootFolder);
             }
         }
-
-
-
-
-        $grid->setVisibleColumns($fields);
-        $grid->setColumnsOrder($fields);
     }
 
-    protected function manipulateQuery($grid) {
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
 
+        $entityName = $this->getEntityName($input);
+        $path = $input->getArgument('path');
+        $rootFolder = $input->getArgument('rootFolder');
+        $associated = true === $input->getOption('associated');
+        $model = $this->getContainer()->get("model_factory")->getModel($entityName);
+        $fieldsInfo = $model->getFieldsInfo();
+        $analyzeFieldsInfo = $this->analizeFieldName($model->getFieldsInfo());
 
+        $this->addFile($analyzeFieldsInfo, $entityName, $path, $output, FALSE, $rootFolder);
 
-
-        $tableAlias = $grid->getSource()->getTableAlias();
-
-        $analizedFieldsInfo = $this->analizedFieldsInfo;
-        $queryBuilderFn = function ($queryBuilder) use($tableAlias, $grid, $analizedFieldsInfo) {
-
-
-
-            $queryBuilder->resetDQLPart('select');
-            $queryBuilder->resetDQLPart('join');
-
-            $fields = [];
-
-            foreach ($analizedFieldsInfo as $field => $fieldParam) {
-
-                if (array_key_exists('association', $fieldParam) && ($fieldParam['association'] == 'ManyToOne' || $fieldParam['association'] == 'OneToOne' )) {
-                    $fields[] = "_{$field}.{$fieldParam['default_field']} as {$field}::{$fieldParam['default_field']}";
-                    if($fieldParam['default_field']!='id'){
-                        $fields[] = "_{$field}.id as {$field}::id";
-                    }
-                } else {
-
-                    $fields[] = "{$tableAlias}.{$field}";
-                }
-            }
-
-
-            $fieldsSql = implode(',', $fields);
-
-            $queryBuilder->select($fieldsSql);
-
-            foreach ($analizedFieldsInfo as $field => $fieldParam) {
-
-                if (array_key_exists('association', $fieldParam) && ($fieldParam['association'] == 'ManyToOne' || $fieldParam['association'] == 'OneToOne' )) {
-
-                    $queryBuilder->leftJoin("$tableAlias.{$field}", "_{$field}");
-                }
-            }
-
-
-            if ($this->manyToManyRelationExists) {
-                $queryBuilder->addGroupBy($tableAlias . '.id');
-            }
-        };
-
-
-
-
-
-
-
-
-        $grid->getSource()->manipulateQuery($queryBuilderFn);
-    }
-
-    protected function configureRowButton($grid, $routePrefix) {
-
-
-        $parametersArr = $this->request->attributes->all();
-        $parameters = ["id", "containerName" => "container", "actionId" => "default"];
-        $parameters = array_merge($parameters, $parametersArr["_route_params"]);
-
-
-
-        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix . '_read', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Show']);
-        $rowAction->setRouteParameters($parameters);
-        $grid->addRowAction($rowAction);
-
-        $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix . '_update', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Edit']);
-        $rowAction->setRouteParameters($parameters);
-        $grid->addRowAction($rowAction);
-
-        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix . '_delete', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Delete']);
-        $rowAction->setRouteParameters($parameters);
-        $grid->addRowAction($rowAction);
+        //generate assoc form types
+        if (true === $input->getOption('associated')) {
+            $this->runAssociatedObjects($fieldsInfo, $analyzeFieldsInfo, $entityName, $path, $rootFolder, $output);
+        }
     }
 
 }
