@@ -73,7 +73,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
          {% set id=field~'.'~fieldParam.default_field %}
      {% endif %}    
              
-      ${{field}} = new {{fieldParam.default_field_type}}Column(array('id' => '{{id}}', 'field'=>'{{field}}.{{fieldParam.default_field}}' ,'title' => '{{field}}.{{fieldParam.default_field}}', 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true));
+      ${{field}} = new {{fieldParam.default_field_type}}Column(array('id' => '{{id}}', 'field'=>'{{field}}.{{fieldParam.default_field}}' ,'title' => '{{field}}.{{fieldParam.default_field}}', 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true, 'options' =>['eq']));
       ${{field}}->setFilterType('select');
       ${{field}}->setSelectExpanded(FALSE);//TRUE - RADIO or CHECKBOXES, FALSE - SELECT
       //${{field}}->setSelectMulti(FALSE);//FALSE - RADIO or TRUE - CHECKBOXES 
