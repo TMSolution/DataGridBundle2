@@ -62,7 +62,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
     }
 
     
-    protected function configureColumn($grid)
+    protected function configureColumns($grid)
     {
      
      {% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}
