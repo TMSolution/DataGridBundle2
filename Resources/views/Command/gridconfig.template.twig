@@ -66,8 +66,14 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
     {
      
      {% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}
+     
+     {% if fieldParam.default_field=='name' %}
+         {% set id=field~'.id'%}
+     {% else %}
+         {% set id=field~'.'~fieldParam.default_field %}
+     {% endif %}    
              
-      ${{field}} = new {{fieldParam.default_field_type}}Column(array('id' => '{{field}}.{{fieldParam.default_field}}', 'field'=>'{{field}}.{{fieldParam.default_field}}' ,'title' => '{{field}}.{{fieldParam.default_field}}', 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true));
+      ${{field}} = new {{fieldParam.default_field_type}}Column(array('id' => '{{id}}', 'field'=>'{{field}}.{{fieldParam.default_field}}' ,'title' => '{{field}}.{{fieldParam.default_field}}', 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true));
       ${{field}}->setFilterType('select');
       ${{field}}->setSelectExpanded(FALSE);//TRUE - RADIO or CHECKBOXES, FALSE - SELECT
       //${{field}}->setSelectMulti(FALSE);//FALSE - RADIO or TRUE - CHECKBOXES 
@@ -78,15 +84,27 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
      {% for field, fieldParam in fieldsInfo %}{% if loop.first %}
  $grid->setDefaultOrder('{{field}}', 'asc');
 {% endif %}{% endfor %}
-      $grid->setVisibleColumns([{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}{% if loop.last %}'{{field}}.{{fieldParam.default_field}}'{% else %}'{{field}}.{{fieldParam.default_field}}',{% endif %}{% else %}{% if loop.last %}'{{field}}'{% else %}'{{field}}',{% endif %}{% endif %}{% endfor %}]);
-      $grid->setColumnsOrder([{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}{% if loop.last %}'{{field}}.{{fieldParam.default_field}}'{% else %}'{{field}}.{{fieldParam.default_field}}',{% endif %}{% else %}{% if loop.last %}'{{field}}'{% else %}'{{field}}',{% endif %}{% endif %}{% endfor %}]);
+      $grid->setVisibleColumns([{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}  {% if fieldParam.default_field=='name' %}
+         {% set id=field~'.id'%}
+     {% else %}
+         {% set id=field~'.'~fieldParam.default_field %}
+     {% endif %}  {% if loop.last %}'{{id}}'{% else %}'{{id}}',{% endif %}{% else %}{% if loop.last %}'{{field}}'{% else %}'{{field}}',{% endif %}{% endif %}{% endfor %}]);
+      $grid->setColumnsOrder([{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}  {% if fieldParam.default_field=='name' %}
+         {% set id=field~'.id'%}
+     {% else %}
+         {% set id=field~'.'~fieldParam.default_field %}
+     {% endif %}  {% if loop.last %}'{{id}}'{% else %}'{{id}}',{% endif %}{% else %}{% if loop.last %}'{{field}}'{% else %}'{{field}}',{% endif %}{% endif %}{% endfor %}]);
 
     {% for field, fieldParam in fieldsInfo %}
 /** field {{field}} configuration */    
     
     
       
-    {% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}${{field}} = $grid->getColumn('{{field}}.{{fieldParam.default_field}}'); 
+    {% if  fieldParam.association is defined and (fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne')  %}{% if fieldParam.default_field=='name' %}
+         {% set id=field~'.id'%}
+     {% else %}
+         {% set id=field~'.'~fieldParam.default_field %}
+     {% endif %}${{field}} = $grid->getColumn('{{id}}'); 
       ${{field}}->setTitle('{{lowerNameSpaceForTranslate}}.{{lcObjectName}}.{{field}}.{{fieldParam.default_field}}');
       
         $objectName = $this->getContainer()->get('classmapperservice')->getEntityName('{{fieldParam.object_name}}');
