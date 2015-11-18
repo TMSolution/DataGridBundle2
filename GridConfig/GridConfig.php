@@ -102,6 +102,17 @@ class GridConfig {
         }
     }
 
+    
+    protected function calculateRealId($fieldName)
+    {
+        if($fieldName=='name')
+        {
+            $fieldName='id';
+        }
+        return $fieldName;
+    }
+    
+    
     protected function configureColumns($grid) {
 
         $first = true;
@@ -111,13 +122,18 @@ class GridConfig {
         foreach ($this->analizedFieldsInfo as $field => $fieldParam) {
 
             if (array_key_exists('association', $fieldParam) && ($fieldParam['association'] == 'ManyToOne' || $fieldParam['association'] == 'OneToOne' )) {
+                
+                
+                
+                
+                $realId= $field.'.'.$this->calculateRealID($fieldParam['default_field']);
+                
                 $fieldType = 'TMSolution\\DataGridBundle\\Grid\\Column\\' . $fieldParam["default_field_type"] . "Column";
-                $column = new $fieldType(array('id' => "{$field}.{$fieldParam['default_field']}", 'field' => "{$field}.{$fieldParam['default_field']}", 'title' => "{$field}.{$fieldParam['default_field']}", 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true));
+                $column = new $fieldType(array('id' =>$realId, 'field' => "{$field}.{$fieldParam['default_field']}", 'title' => "{$field}.{$fieldParam['default_field']}", 'source' => $grid->getSource(), 'filterable' => true, 'sortable' => true,'options'=>['eq']));
                 $column->setFilterType('select');
                 $column->setSelectExpanded(FALSE);
 
                 $column->setTitle($this->getColumnTitle($fieldParam['object_name'], $fieldParam['default_field'], $this->objectName));
-
 
                 $objectName = $this->getContainer()->get('classmapperservice')->getEntityName($fieldParam['object_name']);
                 $column->setSafe(false); // not convert html entities
@@ -142,7 +158,7 @@ class GridConfig {
 
 
                 $grid->addColumn($column, $columnOrder = null);
-                $fields[] = "{$field}.{$fieldParam['default_field']}";
+                $fields[] = $realId;
             } else {
                 $column = $grid->getColumn($field);
                 $column->setTitle($this->getColumnTitle($this->objectName, $field));
