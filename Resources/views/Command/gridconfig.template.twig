@@ -177,12 +177,8 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
         $parameters=  array_merge($parameters,$parametersArr["_route_params"]);
       
 
-        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_read', false, null, ['id' => '{{objectName|lower}}-read-button', 'class' => 'button-class', 'data-original-title' => 'Show']);
+        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_view', false, null, ['id' => '{{objectName|lower}}-read-button', 'class' => 'button-class', 'data-original-title' => 'View']);
         $rowAction->setRouteParameters($parameters);
-        $grid->addRowAction($rowAction);
-    
-        $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix.'_edit', false, null, ['id' => '{{objectName|lower}}-update-button', 'class' => 'button-class', 'data-original-title' => 'Edit']);
-       $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
         
         $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => '{{objectName|lower}}-delete-button', 'class' => 'button-class', 'data-original-title' => 'Delete']);
