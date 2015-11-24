@@ -45,7 +45,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
        $queryBuilder->resetDQLPart('join');
        $queryBuilder->select({% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' )  %} '_{{field}}.{{fieldParam.default_field}} as {{field}}::{{fieldParam.default_field}} {% if fieldParam.default_field!='id' %},'.'_{{field}}.id as {{field}}::id {% endif %}{% if not loop.last %},'.{% else %}'{% endif %}{% else %}$tableAlias.'.{{field}}{% if  not loop.last %},'.{% else %}'{% endif %}{% endif %}{% endfor %});
 
-{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' ) %}
+{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne'  or fieldParam.association == 'ManyToMany') %}
        $queryBuilder->leftJoin("$tableAlias.{{field}}","_{{field}}");
 {%  endif %}{%  endfor %}
     
