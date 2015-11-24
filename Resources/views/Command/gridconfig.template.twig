@@ -14,7 +14,7 @@ use APY\DataGridBundle\Grid\Export\XMLExport;
 use TMSolution\DataGridBundle\Grid\Column\NumberColumn;
 use TMSolution\DataGridBundle\Grid\Column\TextColumn;
 use TMSolution\DataGridBundle\Grid\Action\RowAction;
-{% if associated %}use Core\PrototypeBundle\GridConfig\AssociationGridConfig;
+{% if associated %}use Core\PrototypeBundle\Config\AssociationGridConfig;
 {% else %}use TMSolution\DataGridBundle\GridConfig\GridConfig as BaseGridConfig;{% endif %}
 
 /**
