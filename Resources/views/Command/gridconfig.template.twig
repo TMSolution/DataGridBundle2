@@ -168,21 +168,18 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
     protected function configureRowButton($grid,$routePrefix)
     {
     
-        
-    
-    
-      
+
         $parametersArr=$this->request->attributes->all();
         $parameters = ["id","containerName"=>"container","actionId"=>"default"];
         $parameters=  array_merge($parameters,$parametersArr["_route_params"]);
       
 
-        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_view', false, null, ['id' => '{{objectName|lower}}-view-button', 'class' => 'button-class', 'data-original-title' => 'View']);
+        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_view', false, null, ['id' => '{{objectName|lower}}-view-button', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'View']);
         $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
     
         
-        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => '{{objectName|lower}}-delete-button', 'class' => 'button-class', 'data-original-title' => 'Delete']);
+        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => '{{objectName|lower}}-delete-button', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Delete']);
         $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
     }
