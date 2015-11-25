@@ -246,13 +246,13 @@ class GridConfig {
 
 
 
-        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix . '_read', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Show']);
+        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix . '_view', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'View']);
         $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
 
-        $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix . '_update', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Edit']);
+       /* $rowAction = new RowAction('glyphicon glyphicon-edit', $routePrefix . '_update', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Edit']);
         $rowAction->setRouteParameters($parameters);
-        $grid->addRowAction($rowAction);
+        $grid->addRowAction($rowAction);*/
 
         $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix . '_delete', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Delete']);
         $rowAction->setRouteParameters($parameters);
