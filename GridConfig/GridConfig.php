@@ -254,7 +254,7 @@ class GridConfig {
         $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);*/
 
-        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix . '_delete', false, null, ['id' => 'button-id', 'class' => 'button-class button-delete', 'data-original-title' => 'Delete']);
+        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix . '_delete', false, null, ['id' => 'button-id', 'class' => 'button-class grid-button-delete', 'data-original-title' => 'Delete']);
         $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
     }
