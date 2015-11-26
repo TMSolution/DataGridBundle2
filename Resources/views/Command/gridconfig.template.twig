@@ -179,7 +179,7 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
         $grid->addRowAction($rowAction);
     
         
-        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => '{{objectName|lower}}-delete-button', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'Delete']);
+        $rowAction = new RowAction('glyphicon glyphicon-remove', $routePrefix.'_delete', false, null, ['id' => '{{objectName|lower}}-delete-button', 'class' => 'button-class button-delete', 'data-original-title' => 'Delete']);
         $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
     }
