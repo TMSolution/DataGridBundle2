@@ -22,7 +22,7 @@ class GridConfig {
     
    protected function init()
    {
-        $this->request = $this->getContainer()->get('request');
+        $this->request = $this->getContainer()->get('request_stack')->getCurrentRequest();
        
         $this->objectName = $this->request->get('objectName');
         
@@ -242,7 +242,7 @@ class GridConfig {
 
         $parametersArr = $this->request->attributes->all();
         $parameters = ["id", "containerName" => "container", "actionId" => "default"];
-        $parameters = array_merge($parameters, $parametersArr["_route_params"]);
+        $parameters = array_merge($parametersArr["_route_params"],$parameters);
 
 
 
