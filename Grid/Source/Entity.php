@@ -483,11 +483,9 @@ class Entity extends ApySourceEntity {
 
                     foreach ($filters as $filter) {
 
-                       
-                        
                         $nameArr=explode('.',$this->getFieldName($column, false));
                         $field=$nameArr[count($nameArr)-1];
-                        if($field=='name')
+                        if($field=='name' && $nameArr[0]!==$this->tableAlias)
                         {
                             $nameArr[count($nameArr)-1]=$column->getValueField();
                         }    
@@ -583,7 +581,7 @@ class Entity extends ApySourceEntity {
         $query = $this->query->getQuery();
 
 
-
+       // dump($this->query->getQuery()->getSQL());
 
 
 
