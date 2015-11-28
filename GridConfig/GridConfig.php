@@ -246,7 +246,7 @@ class GridConfig {
 
 
 
-        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix . '_view', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'View']);
+        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix . '_view', false, null, ['id' => 'button-id', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'View', 'data-route-target' => '.content']);
         $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
 
