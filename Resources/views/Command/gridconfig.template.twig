@@ -45,11 +45,23 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
        $queryBuilder->resetDQLPart('join');
        $queryBuilder->select({% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' )  %} '_{{field}}.{{fieldParam.default_field}} as {{field}}::{{fieldParam.default_field}} {% if fieldParam.default_field!='id' %},'.'_{{field}}.id as {{field}}::id {% endif %}{% if not loop.last %},'.{% else %}'{% endif %}{% else %}$tableAlias.'.{{field}}{% if  not loop.last %},'.{% else %}'{% endif %}{% endif %}{% endfor %});
 
-{% for field, fieldParam in fieldsInfo %}{% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne'  or fieldParam.association == 'ManyToMany') %}
-       $queryBuilder->leftJoin("$tableAlias.{{field}}","_{{field}}");
-{%  endif %}{%  endfor %}
+       {% if associated %}$fieldsArr = [];{% endif %}
+       
+{% for field, fieldParam in fieldsInfo %}
+    {% if  fieldParam.association is defined and ( fieldParam.association == 'ManyToOne' or fieldParam.association == 'OneToOne' ) %}
+       
+        {% if associated %}$fieldsArr[] = "{{field}}";{% endif %}
+        $queryBuilder->leftJoin("$tableAlias.{{field}}","_{{field}}");
+    {%  endif %}
+
+{%  endfor %}
     
-        {% if associated %}$queryBuilder->Where("_$parentFieldName.id=:$parentFieldName");        
+        {% if associated %}
+            if (!in_array($parentFieldName, $fieldsArr)) {
+                $queryBuilder->leftJoin("$tableAlias.$parentFieldName", "_{$parentFieldName}");
+            }
+            
+            $queryBuilder->Where("_$parentFieldName.id=:$parentFieldName");        
         $queryBuilder->setParameter("$parentFieldName", (int)$parentId);{%  endif %}
 
       {% if  many_to_many_relation_exists is defined and many_to_many_relation_exists == true  %} 
@@ -171,10 +183,10 @@ class GridConfig extends {% if associated %}AssociationGridConfig{% else %}BaseG
 
         $parametersArr=$this->request->attributes->all();
         $parameters = ["id","containerName"=>"container","actionId"=>"default"];
-        $parameters=  array_merge($parameters,$parametersArr["_route_params"]);
+        $parameters=  array_merge($parametersArr["_route_params"],$parameters);
       
 
-        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_view', false, null, ['id' => '{{objectName|lower}}-view-button', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'View']);
+        $rowAction = new RowAction('glyphicon glyphicon-eye-open', $routePrefix.'_view', false, null, ['id' => '{{objectName|lower}}-view-button', 'class' => 'button-class lazy-loaded', 'data-original-title' => 'View', 'data-route-target' => '.content']);
         $rowAction->setRouteParameters($parameters);
         $grid->addRowAction($rowAction);
     
