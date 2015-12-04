@@ -92,10 +92,10 @@ class GridConfig {
         $lowerNameSpaceForTranslate = str_replace('bundle.entity', '', str_replace('\\', '.', strtolower($entityNamespace)));
         if ($defaultName && !$parentObject) {
 
-            return "{$lowerNameSpaceForTranslate}." . strtolower($objectName) . ".{$defaultName}";
+            return "{$lowerNameSpaceForTranslate}." . strtolower($objectName) . strtolower(".{$defaultName}");
         } else {
             if ($parentObject) {
-                return "{$lowerNameSpaceForTranslate}." . strtolower("$parentObjectName.") . lcfirst($objectName) . ".{$defaultName}";
+                return "{$lowerNameSpaceForTranslate}." . strtolower("$parentObjectName.") . strtolower($objectName) . strtolower(".{$defaultName}");
             } else {
                 return "{$lowerNameSpaceForTranslate}." . strtolower($objectName);
             }
