@@ -35,6 +35,7 @@ class GridConfigCommand extends ContainerAwareCommand
     {
         $this->setName('datagrid:generate:grid:config')
                 ->setDescription("Generate widget and template\r\n use --associated to create associated Grid Config")
+                ->addArgument('configBundle', InputArgument::REQUIRED, 'Insert config bundle name or entity path')
                 ->addArgument('entity', InputArgument::REQUIRED, 'Insert entity class name')
                 ->addArgument('path', InputArgument::OPTIONAL, 'Insert path')
                 ->addArgument('rootFolder', InputArgument::OPTIONAL, 'Insert form type path')
@@ -76,25 +77,8 @@ EOT
         return $classPath;
     }
 
-    /* protected function createDirectory($classPath, $entityNamespace, $objectName, $path)
-      {
 
-      //    die($entityNamespace);
-      if ($path) {
-      $path = DIRECTORY_SEPARATOR . $path;
-      }
-
-      $this->directory = str_replace("\\", DIRECTORY_SEPARATOR, ($classPath . "\\" . $entityNamespace));
-      $this->directory = $this->replaceLast("Entity", "Config" . $path . DIRECTORY_SEPARATOR . $objectName, $this->directory);
-
-      if (is_dir($this->directory) == false) {
-      if (mkdir($this->directory, 0777, TRUE) == false) {
-      throw new UnexpectedValueException("Creating directory failed");
-      }
-      }
-      } */
-
-    protected function createDirectory($classPath, $entityNamespace, $objectName, $path, $rootFolder)
+    protected function createDirectory($classPath, $entityNamespace,$configEntityName, $objectName, $path, $rootFolder)
     {
 
         if ($path) {
@@ -113,9 +97,9 @@ EOT
         return $directory;
     }
 
-    protected function createNameSpace($entityNamespace, $objectName, $path, $rootFolder)
+    protected function createNameSpace($entityNamespace, $objectName, $path, $rootFolder,$configEntityName)
     {
-
+/*
         if ($path) {
             $path = DIRECTORY_SEPARATOR . $path;
         }
@@ -126,10 +110,35 @@ EOT
 
 
 
-        $this->namespace = str_replace("\\", DIRECTORY_SEPARATOR, $entityNamespace);
-        $this->namespace = $this->replaceLast("Entity", "Config" . $rootFolder . $path /*. DIRECTORY_SEPARATOR . $objectName*/, $this->namespace);
+        $this->namespace = str_replace("\\", DIRECTORY_SEPARATOR, $configEntityName);
+        
+        $this->namespace = $this->replaceLast("Entity", "Config" . $rootFolder . $path , $this->namespace);
 
+        dump( $this->namespace);
+        
         return $this->namespace;
+        
+        */
+        
+        
+        
+        
+        
+        
+        
+        $directory = "Config\\".$rootFolder;
+        if ($path) {
+            $directory = str_replace(DIRECTORY_SEPARATOR, "\\", "Config\\".$rootFolder."\\" . $path);
+        }
+        $entityNameArr = explode("\\", str_replace("Entity", $directory, $configEntityName/*$entityName*/));
+        unset($entityNameArr[count($entityNameArr) - 1]);
+        
+        $this->namespace=implode("\\", $entityNameArr);
+        return $this->namespace;
+        
+        
+        
+        
     }
 
     protected function calculateFileName($entityReflection)
@@ -186,17 +195,20 @@ EOT
         return $fieldsInfo;
     }
 
-    protected function addFile($fieldsInfo, $entityName, $path, $output, $associated = false, $rootFolder)
+    protected function addFile($fieldsInfo, $entityName, $path, $output, $associated = false, $rootFolder,$configEntityName)
     {
 
-        $classPath = $this->getClassPath($entityName);
+        $confgEntityReflection = new ReflectionClass($configEntityName);
+        $configEntityNamespace = $confgEntityReflection->getNamespaceName();
+        
+        $classPath = $this->getClassPath($configEntityName);
         $entityReflection = new ReflectionClass($entityName);
         $entityNamespace = $entityReflection->getNamespaceName();
         $objectName = $entityReflection->getShortName();
         $lowerNameSpaceForTranslate = str_replace('bundle.entity', '', str_replace('\\', '.', strtolower($entityNamespace)));
         
-        $this->directory = $this->createDirectory($classPath, $entityNamespace, $objectName, $path, $rootFolder);
-        $namespace = $this->createNameSpace($entityNamespace, $objectName, $path, $rootFolder);
+        $this->directory = $this->createDirectory($classPath, /*$entityNamespace*/$configEntityNamespace,$configEntityName, $objectName, $path, $rootFolder);
+        $namespace = $this->createNameSpace($entityNamespace, $objectName, $path, $rootFolder,$configEntityName);
 
         $fileName = $this->directory . DIRECTORY_SEPARATOR . 'GridConfig.php';
 
@@ -218,7 +230,7 @@ EOT
         $output->writeln(sprintf("Grid config generated for <info>%s</info>", $entityName));
     }
 
-    protected function runAssociatedObjects($fieldsInfo, $analyzeFieldsInfo, $entityName, $rootPath, $rootFolder, $output)
+    protected function runAssociatedObjects($fieldsInfo, $analyzeFieldsInfo, $entityName, $rootPath, $rootFolder, $output,$configEntityName)
     {
         $associations = [];
         foreach ($fieldsInfo as $key => $value) {
@@ -237,9 +249,40 @@ EOT
                 $arr = explode('\\', $value['object_name']);
                 $path = array_pop($arr);
 
-                $this->addFile($assocObjectAnalyzeFieldsInfo, $value['object_name'], $rootPath . DIRECTORY_SEPARATOR . $path, $output, TRUE, $rootFolder);
+                $this->addFile($assocObjectAnalyzeFieldsInfo, $value['object_name'], $rootPath . DIRECTORY_SEPARATOR . $path, $output, TRUE, $rootFolder,$configEntityName);
             }
         }
+    }
+    
+    protected function getConfigEntityName($input,$output)
+    {
+        $manager = new DisconnectedMetadataFactory($this->getContainer()->get('doctrine'));
+                
+       
+        try {
+
+            $configBundle = $this->getApplication()->getKernel()->getBundle($input->getArgument('configBundle'));
+            $configBundleMetadata = $manager->getBundleMetadata($configBundle);
+            $configMetadata = $configBundleMetadata->getMetadata();
+            $configEntityName = $configMetadata[0]->getName();
+        } catch (\InvalidArgumentException $e) {
+            try {
+                $configModel = $this->getContainer()->get("model_factory")->getModel($input->getArgument('configBundle'));
+                $configMetadata = $configModel->getMetadata();
+                $configEntityName = $configMetadata->getName();
+            } catch (\Exception $e) {
+                $output->writeln("<error>Argument configBundle:\"" . $input->getArgument('configBundle') . "\" not exist.</error>");
+                exit;
+            }
+        }
+
+        
+        if (!$configEntityName) {
+            $output->writeln("<error>Argument configEntityName not exist.</error>");
+            exit;
+        }
+        
+        return $configEntityName;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -252,12 +295,15 @@ EOT
         $model = $this->getContainer()->get("model_factory")->getModel($entityName);
         $fieldsInfo = $model->getFieldsInfo();
         $analyzeFieldsInfo = $this->analizeFieldName($model->getFieldsInfo());
+        
+        //configNameSpace
+        $configEntityName=$this->getConfigEntityName($input,$output);
 
-        $this->addFile($analyzeFieldsInfo, $entityName, $path, $output, FALSE, $rootFolder);
+        $this->addFile($analyzeFieldsInfo, $entityName, $path, $output, FALSE, $rootFolder,$configEntityName);
 
         //generate assoc form types
         if (true === $input->getOption('associated')) {
-            $this->runAssociatedObjects($fieldsInfo, $analyzeFieldsInfo, $entityName, $path, $rootFolder, $output);
+            $this->runAssociatedObjects($fieldsInfo, $analyzeFieldsInfo, $entityName, $path, $rootFolder, $output,$configEntityName);
         }
     }
 
